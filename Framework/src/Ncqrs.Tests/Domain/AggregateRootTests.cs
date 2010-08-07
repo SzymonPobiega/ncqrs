@@ -73,9 +73,9 @@ namespace Ncqrs.Tests.Domain
             private void OnFoo(SourcedEvent e)
             {
                 FooEventHandlerInvokeCount++;
-            }
+            }            
         }
-
+        
         [Test]
         public void It_should_initialize_with_a_new_id_given_by_the_generator_from_the_environment()
         {
@@ -336,6 +336,6 @@ namespace Ncqrs.Tests.Domain
 
                 act.ShouldThrow<InvalidOperationException>();
             }
-        }
+        }        
     }
 }

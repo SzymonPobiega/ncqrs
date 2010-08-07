@@ -35,7 +35,7 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
         private String _regexPattern = "^(on|On|ON)+";
         private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-        public IEnumerable<ISourcedEventHandler> GetEventHandlersFromAggregateRoot(IEventSource eventSource)
+        public IEnumerable<ISourcedEventHandler> GetEventHandlersFromAggregateRoot(object eventSource)
         {
             Contract.Requires<ArgumentNullException>(eventSource != null, "The eventSource cannot be null.");
             Contract.Ensures(Contract.Result<IEnumerable<ISourcedEventHandler>>() != null, "The result should never be null.");

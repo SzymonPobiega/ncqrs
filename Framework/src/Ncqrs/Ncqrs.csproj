@@ -103,8 +103,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Domain\Entity.cs" />
     <Compile Include="Domain\Storage\IAggregateRootCreationStrategy.cs" />
     <Compile Include="Domain\Storage\SimpleAggregateRootCreationStrategy.cs" />
+    <Compile Include="Eventing\Sourcing\TypeAndCallbackThresholdedActionBasedDomainEventHandler.cs" />
     <Compile Include="GuidCombGenerator.cs" />
     <Compile Include="Commanding\CommandBase.cs" />
     <Compile Include="Commanding\CommandExecution\CommandExecutorWrapper.cs" />
