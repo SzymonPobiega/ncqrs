@@ -35,7 +35,7 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
         /// <param name="eventSource">The aggregate root.</param>
         /// <see cref="AttributeBasedSourcedEventHandlerMappingStrategy"/>
         /// <returns>All the <see cref="IDomainEventHandler"/>'s created based on attribute mapping.</returns>
-        public IEnumerable<ISourcedEventHandler> GetEventHandlersFromAggregateRoot(IEventSource eventSource)
+        public IEnumerable<ISourcedEventHandler> GetEventHandlersFromAggregateRoot(object eventSource)
         {
             Contract.Requires<ArgumentNullException>(eventSource != null, "The eventSource cannot be null.");
 
@@ -72,7 +72,7 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
             return handlers;
         }
 
-        private static ISourcedEventHandler CreateHandlerForMethod(IEventSource eventSource, MethodInfo method, EventHandlerAttribute attribute)
+        private static ISourcedEventHandler CreateHandlerForMethod(object eventSource, MethodInfo method, EventHandlerAttribute attribute)
         {
             Type firstParameterType = method.GetParameters().First().ParameterType;
 

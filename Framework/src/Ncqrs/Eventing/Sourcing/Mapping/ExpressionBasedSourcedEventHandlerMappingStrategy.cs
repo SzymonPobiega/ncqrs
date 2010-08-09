@@ -38,7 +38,7 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
         /// <param name="eventSource">The aggregate root.</param>
         /// <see cref="ExpressionBasedSourcedEventHandlerMappingStrategy"/>
         /// <returns>All the <see cref="ISourcedEventHandler"/>'s created based on the given mapping.</returns>
-        public IEnumerable<ISourcedEventHandler> GetEventHandlersFromAggregateRoot(IEventSource eventSource)
+        public IEnumerable<ISourcedEventHandler> GetEventHandlersFromAggregateRoot(object eventSource)
         {
             Contract.Requires<ArgumentNullException>(eventSource != null, "The eventSource cannot be null.");
 
@@ -69,7 +69,7 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
         /// <param name="method">The method to invoke</param>
         /// <param name="exact"><b>True</b> if we need to have an exact match, otherwise <b>False</b>.</param>
         /// <returns>An <see cref="ISourcedEventHandler"/> that handles the execution of the given method.</returns>
-        private static ISourcedEventHandler CreateHandlerForMethod(IEventSource eventSource, MethodInfo method, bool exact)
+        private static ISourcedEventHandler CreateHandlerForMethod(object eventSource, MethodInfo method, bool exact)
         {
             Type firstParameterType = method.GetParameters().First().ParameterType;
 

@@ -8,6 +8,7 @@ using NUnit.Framework;
 using Rhino.Mocks;
 using System.Data.SqlClient;
 using Ncqrs.Eventing.Storage;
+using System.Configuration;
 
 namespace Ncqrs.Tests.Eventing.Storage.SQL
 {
@@ -69,12 +70,18 @@ namespace Ncqrs.Tests.Eventing.Storage.SQL
         {
         }
 
-        private const string DEFAULT_CONNECTION = "Data Source=.\\sqlexpress;Initial Catalog=MsSqlServerEventStoreTestEventStore;Integrated Security=True";
+        private const string DEFAULT_CONNECTIONSTRING_KEY = "EventStore";
+        private readonly string connectionString;
+
+        public MsSqlServerEventStoreTests()
+        {
+            connectionString = ConfigurationManager.ConnectionStrings[DEFAULT_CONNECTIONSTRING_KEY].ConnectionString;
+        }
 
         [SetUp]
         public void Verify_sql_connection()
         {
-            var connection = new SqlConnection(DEFAULT_CONNECTION);
+            var connection = new SqlConnection(connectionString);
 
             try
             {
@@ -83,6 +90,29 @@ namespace Ncqrs.Tests.Eventing.Storage.SQL
             catch (Exception caught)
             {
                 Assert.Ignore("No connection could be made with SQL server: " + caught.Message);            
+            }
+            finally
+            {
+                connection.Dispose();
+            }
+        }
+
+        [TearDown]
+        public void Clean()
+        {
+            var connectionString = ConfigurationManager.ConnectionStrings[DEFAULT_CONNECTIONSTRING_KEY].ConnectionString;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var cmd = connection.CreateCommand();
+                cmd.CommandText = "TRUNCATE TABLE [Events]";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "TRUNCATE TABLE [EventSources]";
+                cmd.ExecuteNonQuery();
+
+                cmd.CommandText = "TRUNCATE TABLE [Snapshots]";
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -97,7 +127,7 @@ namespace Ncqrs.Tests.Eventing.Storage.SQL
         [Test]
         public void Saving_event_source_should_succeed()
         {
-            var targetStore = new MsSqlServerEventStore(DEFAULT_CONNECTION);
+            var targetStore = new MsSqlServerEventStore(connectionString);
             var id = Guid.NewGuid();
 
             int sequenceCounter = 0;
@@ -126,7 +156,7 @@ namespace Ncqrs.Tests.Eventing.Storage.SQL
         [Test]
         public void Saving_event_source_while_there_is_a_newer_event_source_should_throw_concurency_exception()
         {
-            var targetStore = new MsSqlServerEventStore(DEFAULT_CONNECTION);
+            var targetStore = new MsSqlServerEventStore(connectionString);
             var id = Guid.NewGuid();
 
             int sequenceCounter = 0;
@@ -140,10 +170,10 @@ namespace Ncqrs.Tests.Eventing.Storage.SQL
                              };
 
             var eventSource = MockRepository.GenerateMock<IEventSource>();
-            eventSource.Stub(e => e.EventSourceId).Return(id).Repeat.Twice();
-            eventSource.Stub(e => e.InitialVersion).Return(0).Repeat.Twice();
-            eventSource.Stub(e => e.Version).Return(events.Length).Repeat.Twice();
-            eventSource.Stub(e => e.GetUncommittedEvents()).Return(events).Repeat.Twice();
+            eventSource.Stub(e => e.EventSourceId).Return(id).Repeat.Any();
+            eventSource.Stub(e => e.InitialVersion).Return(0).Repeat.Any();
+            eventSource.Stub(e => e.Version).Return(events.Length).Repeat.Any();
+            eventSource.Stub(e => e.GetUncommittedEvents()).Return(events).Repeat.Any();
 
             targetStore.Save(eventSource);
 
@@ -154,7 +184,7 @@ namespace Ncqrs.Tests.Eventing.Storage.SQL
         [Test]
         public void Retrieving_all_events_should_return_the_same_as_added()
         {
-            var targetStore = new MsSqlServerEventStore(DEFAULT_CONNECTION);
+            var targetStore = new MsSqlServerEventStore(connectionString);
             var id = Guid.NewGuid();
 
             int sequenceCounter = 1;
@@ -186,7 +216,7 @@ namespace Ncqrs.Tests.Eventing.Storage.SQL
         [Test]
         public void Saving_snapshot_should_not_throw_an_exception_when_snapshot_is_valid()
         {
-            var targetStore = new MsSqlServerEventStore(DEFAULT_CONNECTION);
+            var targetStore = new MsSqlServerEventStore(connectionString);
 
             var anId = Guid.NewGuid();
             var aVersion = 12;

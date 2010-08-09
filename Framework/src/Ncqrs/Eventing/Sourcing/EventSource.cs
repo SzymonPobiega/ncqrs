@@ -67,6 +67,7 @@ namespace Ncqrs.Eventing.Sourcing
             protected set
             {
                 Contract.Requires<InvalidOperationException>(Version == InitialVersion);
+                Contract.Requires<ArgumentOutOfRangeException>(value >= 0);
 
                 _initialVersion = value;
                 _uncommittedEvents.SequenceOffset = value;
@@ -117,7 +118,7 @@ namespace Ncqrs.Eventing.Sourcing
             }
         }
 
-        protected void RegisterHandler(ISourcedEventHandler handler)
+        public void RegisterHandler(ISourcedEventHandler handler)
         {
             Contract.Requires<ArgumentNullException>(handler != null, "The handler cannot be null.");
 
@@ -129,7 +130,9 @@ namespace Ncqrs.Eventing.Sourcing
             Contract.Requires<ArgumentNullException>(evnt != null, "The Event cannot be null.");
             Boolean handled = false;
 
-            foreach (var handler in _eventHandlers)
+            var handlers = new List<ISourcedEventHandler>(_eventHandlers);
+
+            foreach (var handler in handlers)
             {
                 handled |= handler.HandleEvent(evnt);
             }
@@ -138,7 +141,7 @@ namespace Ncqrs.Eventing.Sourcing
                 throw new EventNotHandledException(evnt);
         }
 
-        protected void ApplyEvent(SourcedEvent evnt)
+        public void ApplyEvent(SourcedEvent evnt)
         {
             if (evnt.EventSourceId != SourcedEvent.UndefinedEventSourceId)
             {

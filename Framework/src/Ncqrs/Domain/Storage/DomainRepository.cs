@@ -15,8 +15,9 @@ namespace Ncqrs.Domain.Storage
         private readonly IEventBus _eventBus;
         private readonly IEventStore _store;
         private readonly ISnapshotStore _snapshotStore;
+        private readonly IAggregateRootCreationStrategy _aggregateRootCreator = new SimpleAggregateRootCreationStrategy();
 
-        public DomainRepository(IEventStore store, IEventBus eventBus, ISnapshotStore snapshotStore = null)
+        public DomainRepository(IEventStore store, IEventBus eventBus, ISnapshotStore snapshotStore = null, IAggregateRootCreationStrategy aggregateRootCreationStrategy = null)
         {
             Contract.Requires<ArgumentNullException>(store != null);
             Contract.Requires<ArgumentNullException>(eventBus != null);
@@ -24,6 +25,7 @@ namespace Ncqrs.Domain.Storage
             _store = store;
             _eventBus = eventBus;
             _snapshotStore = snapshotStore;
+            _aggregateRootCreator = aggregateRootCreationStrategy ?? new SimpleAggregateRootCreationStrategy();
         }
 
         private bool ShouldCreateSnapshot(AggregateRoot aggregateRoot)
@@ -124,32 +126,18 @@ namespace Ncqrs.Domain.Storage
             return aggregateRoot;
         }
 
+        protected AggregateRoot CreateEmptyAggRoot(Type aggregateRootType)
+        {
+            return _aggregateRootCreator.CreateAggregateRoot(aggregateRootType);
+        }
+
         private bool AggregateRootSupportsSnapshot(Type aggType, ISnapshot snapshot)
         {
             var memType = GetSnapshotInterfaceType(aggType);
-            return memType == typeof(ISnapshotable<>).MakeGenericType(memType);
-        }
+            var snapshotType = snapshot.GetType();
 
-        private AggregateRoot CreateEmptyAggRoot(Type aggType)
-        {
-            // Flags to search for a public and non public contructor.
-            var flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-
-            // Get the constructor that we want to invoke.
-            var ctor = aggType.GetConstructor(flags, null, Type.EmptyTypes, null);
-
-            // If there was no ctor found, throw exception.
-            if (ctor == null)
-            {
-                var message = String.Format("No constructor found on aggregate root type {0} that accepts " +
-                                            "no parameters.", aggType.AssemblyQualifiedName);
-                throw new AggregateLoaderException(message);
-            }
-
-            // There was a ctor found, so invoke it and return the instance.
-            var aggregateRoot = (AggregateRoot) ctor.Invoke(null);
-
-            return aggregateRoot;
+            var expectedType = typeof (ISnapshotable<>).MakeGenericType(snapshotType);
+            return memType == expectedType;
         }
 
         public void Save(AggregateRoot aggregateRoot)
@@ -179,7 +167,6 @@ namespace Ncqrs.Domain.Storage
             if (memType != null)
             {
                 var createMethod = memType.GetMethod("CreateSnapshot");
-
                 return (ISnapshot)createMethod.Invoke(aggregateRoot, new object[0]);
             }
             else

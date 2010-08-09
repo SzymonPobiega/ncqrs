@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Diagnostics.Contracts;
 
 namespace Ncqrs.Commanding.CommandExecution.Mapping.Attributes
 {
@@ -7,6 +8,8 @@ namespace Ncqrs.Commanding.CommandExecution.Mapping.Attributes
     {
         public ICommandExecutor<TCommand> CreateExecutorForCommand<TCommand>() where TCommand : ICommand
         {
+            Contract.Ensures(Contract.Result <ICommandExecutor<TCommand>>() != null);
+
             var commandType = typeof(TCommand);
             var mappingAttr = GetCommandMappingAttributeFromType(commandType);
             return mappingAttr.CreateExecutor<TCommand>();
@@ -27,9 +30,25 @@ namespace Ncqrs.Commanding.CommandExecution.Mapping.Attributes
             return new CommandExecutorWrapper<ICommand>(redirection);
         }
 
-        public bool IsCommandMapped(Type target)
+        /// <summary>
+        /// Determines whether the type is a mapped command.
+        /// </summary>
+        /// <remarks>
+        /// A type is a mapped command when it implements the <see cref="ICommand"/> interface
+        /// and is marked with an attribute that inhires the <see cref="CommandMappingAttribute"/>.
+        /// </remarks>
+        /// <param name="type">The type to check. This value cannot be null.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="type"/> is <c>null</c>.
+        /// </exception>
+        /// <returns>
+        /// 	<c>true</c> if [is command mapped] [the specified target]; otherwise, <c>false</c>.
+        /// </returns>
+        public bool IsCommandMapped(Type type)
         {
-            return target.IsDefined(typeof (CommandMappingAttribute), false);
+            if (type == null) throw new ArgumentNullException("type");
+
+            return type.Implements<ICommand>() &&
+                   type.IsDefined(typeof(CommandMappingAttribute), false);
         }
 
         private CommandMappingAttribute GetCommandMappingAttributeFromType(Type target)
