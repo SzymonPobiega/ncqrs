@@ -72,17 +72,7 @@ namespace Ncqrs.Eventing.Storage.SQL
                 {
                     while (reader.Read())
                     {
-                        StoredEvent<string> rawEvent = ReadEvent(reader);
-
-                        var document = _translator.TranslateToCommon(rawEvent);
-                        _converter.Upgrade(document);
-
-                        var evnt = (SourcedEvent) _formatter.Deserialize(document);
-                        evnt.EventIdentifier = document.EventIdentifier;
-                        evnt.EventTimeStamp = document.EventTimeStamp;
-                        evnt.EventVersion = document.EventVersion;
-                        evnt.EventSourceId = document.EventSourceId;
-                        evnt.EventSequence = document.EventSequence;
+                        SourcedEvent evnt = ReadSourcedEvent(reader);
                         result.Add(evnt);
                     }
                 }
@@ -92,9 +82,57 @@ namespace Ncqrs.Eventing.Storage.SQL
         }
 
         /// <summary>
+        /// Get some events after specified event.
+        /// </summary>
+        /// <param name="eventId">The id of last event not to be included in result set.</param>
+        /// <param name="maxCount">Maximum numer of returned events</param>
+        /// <returns>A collection events starting right after <paramref name="eventId"/>.</returns>
+        public IEnumerable<SourcedEvent> GetEventsAfter(Guid eventId, int maxCount)
+        {
+            var result = new List<SourcedEvent>();
+
+            // Create connection and command.
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(string.Format(Queries.SelectEventsAfterQuery, maxCount), connection))
+            {
+                // Add EventSourceId parameter and open connection.
+                command.Parameters.AddWithValue("EventId", eventId);
+                connection.Open();
+
+                // Execute query and create reader.
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        SourcedEvent evnt = ReadSourcedEvent(reader);
+                        result.Add(evnt);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private SourcedEvent ReadSourcedEvent(SqlDataReader reader)
+        {
+            StoredEvent<string> rawEvent = ReadEvent(reader);
+
+            var document = _translator.TranslateToCommon(rawEvent);
+            _converter.Upgrade(document);
+
+            var evnt = (SourcedEvent) _formatter.Deserialize(document);
+            evnt.EventIdentifier = document.EventIdentifier;
+            evnt.EventTimeStamp = document.EventTimeStamp;
+            evnt.EventVersion = document.EventVersion;
+            evnt.EventSourceId = document.EventSourceId;
+            evnt.EventSequence = document.EventSequence;
+            return evnt;
+        }
+
+        /// <summary>
         /// Saves all events from an event provider.
         /// </summary>
-        /// <param name="provider">The eventsource.</param>
+        /// <param name="eventSource">The eventsource.</param>
         public void Save(IEventSource eventSource)
         {
             // Get all events.
@@ -129,6 +167,37 @@ namespace Ncqrs.Eventing.Storage.SQL
                         // Update the version of the provider.
                         UpdateEventSourceVersion(eventSource, transaction);
 
+                        // Everything is handled, commint transaction.
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        // Something went wrong, rollback transaction.
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Saves all events from a collection.
+        /// </summary>
+        /// <param name="events">The event collection.</param>
+        public void SaveEvents(IEnumerable<ISourcedEvent> events)
+        {
+            // Create new connection.
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                // Open connection and begin a transaction so we can
+                // commit or rollback all the changes that has been made.
+                connection.Open();
+                using (SqlTransaction transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        // Save all events to the store.
+                        SaveEvents(events, transaction);
                         // Everything is handled, commint transaction.
                         transaction.Commit();
                     }
