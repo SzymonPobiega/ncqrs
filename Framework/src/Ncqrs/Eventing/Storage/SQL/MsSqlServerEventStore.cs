@@ -87,25 +87,31 @@ namespace Ncqrs.Eventing.Storage.SQL
         /// <param name="eventId">The id of last event not to be included in result set.</param>
         /// <param name="maxCount">Maximum numer of returned events</param>
         /// <returns>A collection events starting right after <paramref name="eventId"/>.</returns>
-        public IEnumerable<SourcedEvent> GetEventsAfter(Guid eventId, int maxCount)
+        public IEnumerable<SourcedEvent> GetEventsAfter(Guid? eventId, int maxCount)
         {
             var result = new List<SourcedEvent>();
 
             // Create connection and command.
             using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand(string.Format(Queries.SelectEventsAfterQuery, maxCount), connection))
             {
-                // Add EventSourceId parameter and open connection.
-                command.Parameters.AddWithValue("EventId", eventId);
-                connection.Open();
+                var query = eventId.HasValue 
+                    ? Queries.SelectEventsAfterQuery 
+                    : Queries.SelectEventsFromBeginningOfTime;
 
-                // Execute query and create reader.
-                using (SqlDataReader reader = command.ExecuteReader())
+                using (var command = new SqlCommand(string.Format(query, maxCount), connection))
                 {
-                    while (reader.Read())
+                    // Add EventSourceId parameter and open connection.
+                    command.Parameters.AddWithValue("EventId", eventId);
+                    connection.Open();
+
+                    // Execute query and create reader.
+                    using (SqlDataReader reader = command.ExecuteReader())
                     {
-                        SourcedEvent evnt = ReadSourcedEvent(reader);
-                        result.Add(evnt);
+                        while (reader.Read())
+                        {
+                            SourcedEvent evnt = ReadSourcedEvent(reader);
+                            result.Add(evnt);
+                        }
                     }
                 }
             }
