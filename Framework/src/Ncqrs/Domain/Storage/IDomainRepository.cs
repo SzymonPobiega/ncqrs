@@ -41,7 +41,7 @@ namespace Ncqrs.Domain.Storage
     }
 
     [ContractClassFor(typeof(IDomainRepository))]
-    internal sealed class IDomainRepositoryContracts : IDomainRepository
+    internal abstract class IDomainRepositoryContracts : IDomainRepository
     {
         public AggregateRoot GetById(Type aggregateRootType, Guid eventSourceId)
         {

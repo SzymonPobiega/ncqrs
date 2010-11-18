@@ -103,6 +103,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Domain\Storage\IAggregateRootCreationStrategy.cs" />
+    <Compile Include="Domain\Storage\SimpleAggregateRootCreationStrategy.cs" />
+    <Compile Include="GuidCombGenerator.cs" />
     <Compile Include="Commanding\CommandBase.cs" />
     <Compile Include="Commanding\CommandExecution\CommandExecutorWrapper.cs" />
     <Compile Include="Commanding\CommandExecution\CreatingCommandExecutor.cs" />
@@ -191,7 +194,7 @@
     <Compile Include="NamespaceDoc.cs" />
     <Compile Include="NcqrsEnvironment.cs" />
     <Compile Include="Config\IEnvironmentConfiguration.cs" />
-    <Compile Include="NcqrsEnvironmentConfigurationException.cs" />
+    <Compile Include="NcqrsEnvironmentException.cs" />
     <Compile Include="Domain\AggregateRoot.cs" />
     <Compile Include="Domain\AggregateRootMappedByConvention.cs" />
     <Compile Include="Domain\AggregateRootMappedWithAttributes.cs" />
@@ -203,7 +206,7 @@
     <Compile Include="Eventing\Sourcing\Mapping\InvalidEventHandlerMappingException.cs" />
     <Compile Include="Eventing\Sourcing\Mapping\MappedAggregateRoot.cs" />
     <Compile Include="Eventing\Sourcing\Mapping\NoEventHandlerAttribute.cs" />
-    <Compile Include="Domain\Storage\AggregateLoaderException.cs" />
+    <Compile Include="Domain\Storage\AggregateRootCreationException.cs" />
     <Compile Include="Domain\Storage\DomainRepository.cs" />
     <Compile Include="Domain\Storage\IDomainRepository.cs" />
     <Compile Include="Domain\UnitOfWorkFactory.cs" />

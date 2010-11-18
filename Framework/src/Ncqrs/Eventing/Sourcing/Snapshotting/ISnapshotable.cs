@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Ncqrs.Domain;
 using System.Diagnostics.Contracts;
 
 namespace Ncqrs.Eventing.Sourcing.Snapshotting
@@ -25,7 +24,7 @@ namespace Ncqrs.Eventing.Sourcing.Snapshotting
     }
 
     [ContractClassFor(typeof(ISnapshotable<>))]
-    public class SnapshotableContracts<TSnapshot> : ISnapshotable<TSnapshot> where TSnapshot : ISnapshot
+    internal abstract class SnapshotableContracts<TSnapshot> : ISnapshotable<TSnapshot> where TSnapshot : ISnapshot
     {
         public void RestoreFromSnapshot(TSnapshot snapshot)
         {

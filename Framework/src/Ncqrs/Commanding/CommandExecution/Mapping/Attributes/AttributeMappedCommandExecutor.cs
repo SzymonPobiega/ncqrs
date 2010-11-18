@@ -17,8 +17,10 @@ namespace Ncqrs.Commanding.CommandExecution.Mapping.Attributes
             var factory = new AttributeBasedMappingFactory();
             var executor = factory.CreateExecutorForCommand<TCommand>();
 
-            if (command.GetType().GetCustomAttributes(typeof(TransactionalAttribute), true).Length > 0)
+            if (command.GetType().IsDefined(typeof(TransactionalAttribute), true))
+            {
                 executor = new TransactionalCommandExecutorWrapper<TCommand>(executor);
+            }
 
             executor.Execute(command);
         }

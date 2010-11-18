@@ -58,6 +58,8 @@ namespace Ncqrs.Eventing.Sourcing
             set
             {
                 Contract.Requires<InvalidOperationException>(IsEmpty);
+                Contract.Requires<ArgumentOutOfRangeException>(value >= 0);
+
                 _sequenceOffset = value;
             }
         }
@@ -104,7 +106,7 @@ namespace Ncqrs.Eventing.Sourcing
         }
 
         [ContractInvariantMethod]
-        protected void ContractInvariants()
+        private void ContractInvariants()
         {
             Contract.Invariant(_sequenceOffset >= 0);
             Contract.Invariant(Contract.ForAll(_events, (sourcedEvent) => sourcedEvent.EventSourceId == _eventSourceId));
