@@ -25,7 +25,6 @@ namespace Ncqrs.Tests.Domain
             public void OverrideAggregateRootId(Guid id)
             {
                 this.GetType().GetProperty("EventSourceId").SetValue(this, id, null);
-                
             }
         }
 
@@ -37,6 +36,11 @@ namespace Ncqrs.Tests.Domain
             public int FooEventHandlerInvokeCount = 0;
 
             public MyAggregateRoot()
+            {
+                RegisterHandler(new TypeThresholdedActionBasedDomainEventHandler(OnFoo, typeof(HandledEvent), false));
+            }
+
+            public MyAggregateRoot(Guid id) : base(id)
             {
                 RegisterHandler(new TypeThresholdedActionBasedDomainEventHandler(OnFoo, typeof(HandledEvent), false));
             }
@@ -106,27 +110,23 @@ namespace Ncqrs.Tests.Domain
         [Test]
         public void Applying_an_event_should_at_it_to_the_uncommited_events()
         {
-            using (NcqrsEnvironment.Get<IUnitOfWorkFactory>().CreateUnitOfWork())
-            {
-                var theAggregate = new MyAggregateRoot();
+            var theAggregate = new MyAggregateRoot();
 
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
 
-                theAggregate.GetUncommittedEvents().Count().Should().Be(1);
+            theAggregate.GetUncommittedEvents().Count().Should().Be(1);
 
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
 
-                theAggregate.GetUncommittedEvents().Count().Should().Be(2);
-            }
+            theAggregate.GetUncommittedEvents().Count().Should().Be(2);
         }
 
         [Test]
-        public void Applying_an_event_when_there_is_no_unit_of_work_should_cause_an_exception()
+        public void Applying_an_event_when_there_is_no_unit_of_work_should_not_cause_an_exception()
         {
             var theAggregate = new MyAggregateRoot();
-            Action act = ()=> theAggregate.MethodThatCausesAnEventThatHasAHandler();
-
-            act.ShouldThrow<NoUnitOfWorkAvailableInThisContextException>();
+            Action act = ()=>theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            act.ShouldNotThrow();
         }
 
         [Test]
@@ -152,57 +152,48 @@ namespace Ncqrs.Tests.Domain
         [Test]
         public void Getting_the_uncommitted_via_the_IEventSource_interface_should_return_the_same_as_directly()
         {
-            using (NcqrsEnvironment.Get<IUnitOfWorkFactory>().CreateUnitOfWork())
-            {
-                var theAggregate = new MyAggregateRoot();
+            var theAggregate = new MyAggregateRoot();
 
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
 
-                var directResult = theAggregate.GetUncommittedEvents();
-                var viaInterfaceResult = ((IEventSource)theAggregate).GetUncommittedEvents();
-                directResult.Should().BeEquivalentTo(viaInterfaceResult);
-            }
+            var directResult = theAggregate.GetUncommittedEvents();
+            var viaInterfaceResult = ((IEventSource) theAggregate).GetUncommittedEvents();
+            directResult.Should().BeEquivalentTo(viaInterfaceResult);
         }
 
         [Test]
         public void Accepting_the_changes_should_clear_the_uncommitted_events()
         {
-            using (NcqrsEnvironment.Get<IUnitOfWorkFactory>().CreateUnitOfWork())
-            {
-                var theAggregate = new MyAggregateRoot();
+            var theAggregate = new MyAggregateRoot();
 
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
 
-                theAggregate.AcceptChanges();
+            theAggregate.AcceptChanges();
 
-                theAggregate.GetUncommittedEvents().Should().BeEmpty();
-            }
+            theAggregate.GetUncommittedEvents().Should().BeEmpty();
         }
 
         [Test]
         public void Accepting_the_changes_should_set_the_initial_version_to_the_new_version()
         {
-            using (NcqrsEnvironment.Get<IUnitOfWorkFactory>().CreateUnitOfWork())
-            {
-                var theAggregate = new MyAggregateRoot();
+            var theAggregate = new MyAggregateRoot();
 
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
 
-                theAggregate.InitialVersion.Should().Be(0);
+            theAggregate.InitialVersion.Should().Be(0);
 
-                theAggregate.AcceptChanges();
+            theAggregate.AcceptChanges();
 
-                theAggregate.InitialVersion.Should().Be(5);
-            }
+            theAggregate.InitialVersion.Should().Be(5);
         }
 
         [Test]
@@ -222,24 +213,21 @@ namespace Ncqrs.Tests.Domain
         }
 
         [Test]
-        public void Applying_an_event_should_the_the_version()
+        public void Applying_an_event_should_affect_the_version()
         {
-            using (NcqrsEnvironment.Get<IUnitOfWorkFactory>().CreateUnitOfWork())
-            {
-                var theAggregate = new MyAggregateRoot();
+            var theAggregate = new MyAggregateRoot();
 
-                theAggregate.Version.Should().Be(0);
+            theAggregate.Version.Should().Be(0);
 
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();                
-                theAggregate.Version.Should().Be(1);
-                theAggregate.GetUncommittedEvents().Last().EventSequence.Should().Be(1);
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.Version.Should().Be(1);
+            theAggregate.GetUncommittedEvents().Last().EventSequence.Should().Be(1);
 
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
-                theAggregate.Version.Should().Be(2);
-                theAggregate.GetUncommittedEvents().Last().EventSequence.Should().Be(2);
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.Version.Should().Be(2);
+            theAggregate.GetUncommittedEvents().Last().EventSequence.Should().Be(2);
 
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
-            }
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
         }
 
         [Test]
@@ -324,18 +312,24 @@ namespace Ncqrs.Tests.Domain
         [Test]
         public void It_could_not_be_loaded_from_history_when_it_already_contains_uncommitted_events()
         {
-            using (NcqrsEnvironment.Get<IUnitOfWorkFactory>().CreateUnitOfWork())
-            {
-                var theAggregate = new MyAggregateRoot();
+            var theAggregate = new MyAggregateRoot();
 
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
-                theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
+            theAggregate.MethodThatCausesAnEventThatHasAHandler();
 
-                var history = new[] {new HandledEvent(), new HandledEvent()};
-                Action act = () => theAggregate.InitializeFromHistory(history);
+            var history = new[] {new HandledEvent(), new HandledEvent()};
+            Action act = () => theAggregate.InitializeFromHistory(history);
 
-                act.ShouldThrow<InvalidOperationException>();
-            }
+            act.ShouldThrow<InvalidOperationException>();
+        }
+        
+        [Test]
+        public void Constructing_it_with_an_id_should_set_that_to_EventSourceId_property()
+        {
+            var theId = Guid.NewGuid();
+            var theAggregate = new MyAggregateRoot(theId);
+
+            theAggregate.EventSourceId.Should().Be(theId);
         }
     }
 }

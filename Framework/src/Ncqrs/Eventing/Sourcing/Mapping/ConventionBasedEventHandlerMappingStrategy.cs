@@ -30,17 +30,17 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
     /// </list>
     /// </remarks>
     /// </summary>
-    public class ConventionBasedSourcedEventHandlerMappingStrategy : ISourcedEventHandlerMappingStrategy
+    public class ConventionBasedEventHandlerMappingStrategy : IEventHandlerMappingStrategy
     {
         private String _regexPattern = "^(on|On|ON)+";
         private static readonly ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-        public IEnumerable<ISourcedEventHandler> GetEventHandlersFromAggregateRoot(IEventSource eventSource)
+        public IEnumerable<ISourcedEventHandler> GetEventHandlers(object target)
         {
-            Contract.Requires<ArgumentNullException>(eventSource != null, "The eventSource cannot be null.");
+            Contract.Requires<ArgumentNullException>(target != null, "The target cannot be null.");
             Contract.Ensures(Contract.Result<IEnumerable<ISourcedEventHandler>>() != null, "The result should never be null.");
 
-            var targetType = eventSource.GetType();
+            var targetType = target.GetType();
             var handlers = new List<ISourcedEventHandler>();
 
             Logger.DebugFormat("Trying to get all event handlers based by convention for {0}.", targetType);
@@ -68,7 +68,7 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
                 var methodCopy = method.MethodInfo;
                 Type firstParameterType = methodCopy.GetParameters().First().ParameterType;
 
-                Action<IEvent> invokeAction = (e) => methodCopy.Invoke(eventSource, new object[] { e });
+                Action<IEvent> invokeAction = (e) => methodCopy.Invoke(target, new object[] { e });
 
                 Logger.DebugFormat("Created event handler for method {0} based on convention.", methodCopy.Name);
 

@@ -27,19 +27,19 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
     /// }</code>
     /// </remarks>
     /// </summary>
-    public class AttributeBasedSourcedEventHandlerMappingStrategy : ISourcedEventHandlerMappingStrategy
+    public class AttributeBasedEventHandlerMappingStrategy : IEventHandlerMappingStrategy
     {
         /// <summary>
         /// Gets the event handlers from aggregate root based on attributes.
         /// </summary>
-        /// <param name="eventSource">The aggregate root.</param>
-        /// <see cref="AttributeBasedSourcedEventHandlerMappingStrategy"/>
+        /// <param name="target">The aggregate root.</param>
+        /// <see cref="AttributeBasedEventHandlerMappingStrategy"/>
         /// <returns>All the <see cref="IDomainEventHandler"/>'s created based on attribute mapping.</returns>
-        public IEnumerable<ISourcedEventHandler> GetEventHandlersFromAggregateRoot(IEventSource eventSource)
+        public IEnumerable<ISourcedEventHandler> GetEventHandlers(object target)
         {
-            Contract.Requires<ArgumentNullException>(eventSource != null, "The eventSource cannot be null.");
+            Contract.Requires<ArgumentNullException>(target != null, "The target cannot be null.");
 
-            var targetType = eventSource.GetType();
+            var targetType = target.GetType();
             var handlers = new List<ISourcedEventHandler>();
 
             foreach (var method in targetType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
@@ -64,7 +64,7 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
                         throw new InvalidEventHandlerMappingException(message);
                     }
 
-                    var handler = CreateHandlerForMethod(eventSource, method, attribute);
+                    var handler = CreateHandlerForMethod(target, method, attribute);
                     handlers.Add(handler);
                 }
             }
@@ -72,7 +72,7 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
             return handlers;
         }
 
-        private static ISourcedEventHandler CreateHandlerForMethod(IEventSource eventSource, MethodInfo method, EventHandlerAttribute attribute)
+        private static ISourcedEventHandler CreateHandlerForMethod(object eventSource, MethodInfo method, EventHandlerAttribute attribute)
         {
             Type firstParameterType = method.GetParameters().First().ParameterType;
 

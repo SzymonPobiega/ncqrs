@@ -2,17 +2,12 @@
 using Ncqrs;
 using Events;
 using Ncqrs.Domain;
+using Ncqrs.Eventing.Sourcing.Snapshotting;
 
 namespace Domain
 {
-    public class Note : AggregateRootMappedByConvention
+    public class Note : AggregateRootMappedByConvention, ISnapshotable<NoteSnapshot>
     {
-        public Guid Id
-        {
-            get{ return EventSourceId; }
-            set{ EventSourceId = value; }
-        }
-
         private String _text;
         private DateTime _creationDate;
 
@@ -21,7 +16,7 @@ namespace Domain
             // Need a default ctor for Ncqrs.
         }
 
-        public Note(String text)
+        public Note(Guid noteId, String text) : base(noteId)
         {
             var clock = NcqrsEnvironment.Get<IClock>();
 
@@ -31,7 +26,6 @@ namespace Domain
             // this event (the OnNewNoteAdded method).
             ApplyEvent(new NewNoteAdded
             {
-                NoteId = Id,
                 Text = text,
                 CreationDate = clock.UtcNow()
             });
@@ -45,7 +39,6 @@ namespace Domain
             // this event (the NoteTextChanged method).
             ApplyEvent(new NoteTextChanged
             {
-                NoteId = Id,
                 NewText = newText
             });
         }
@@ -54,7 +47,6 @@ namespace Domain
         // is automaticly wired as event handler based on convension.
         protected void OnNewNoteAdded(NewNoteAdded e)
         {
-            Id = e.NoteId;
             _text = e.Text;
             _creationDate = e.CreationDate;
         }
@@ -65,5 +57,31 @@ namespace Domain
         {
             _text = e.NewText;
         }
+        
+        public NoteSnapshot CreateSnapshot()
+        {
+            return new NoteSnapshot
+                       {
+                           EventSourceId = EventSourceId,
+                           EventSourceVersion = Version,
+                           Text = _text,
+                           CreationDate = _creationDate
+                       };
+        }
+
+        public void RestoreFromSnapshot(NoteSnapshot snapshot)
+        {
+            EventSourceId = snapshot.EventSourceId;
+            InitialVersion = snapshot.EventSourceVersion;   
+            _text = snapshot.Text;
+            _creationDate = snapshot.CreationDate;
+        }
+    }
+    [Serializable]
+    public class NoteSnapshot : Snapshot
+    {
+        public string Text { get; set; }
+
+        public DateTime CreationDate { get; set; }
     }
 }

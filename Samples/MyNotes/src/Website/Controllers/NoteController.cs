@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Web.Mvc;
 using Commands;
-using Website.CommandService;
 using ReadModel;
-using System.Linq;
+using Website.CommandService;
 
 namespace Website.Controllers
 {
@@ -32,7 +32,7 @@ namespace Website.Controllers
 
             using (var context = new ReadModelContainer())
             {
-                item = context.NoteItemSet.Single(note => note.Id == id) ;
+                item = context.NoteItemSet.Single(note => note.Id == id);
             }
 
             var command = new ChangeNoteText();
@@ -55,7 +55,10 @@ namespace Website.Controllers
 
         public ActionResult Add()
         {
-            return View();
+            var command = new CreateNewNote();
+            command.NoteId = Guid.NewGuid();
+
+            return View(command);
         }
 
         [HttpPost]
@@ -67,6 +70,22 @@ namespace Website.Controllers
             // Return user back to the index that
             // displays all the notes.));
             return RedirectToAction("Index");
+        }
+
+        public ActionResult Report()
+        {
+            IEnumerable<TotalsPerDayItem> items;
+
+            using (var context = new ReadModelContainer())
+            {
+                var query = from item in context.TotalsPerDayItemSet
+                            orderby item.Date descending
+                            select item;
+
+                items = query.ToArray();
+            }
+
+            return View(items);
         }
     }
 }

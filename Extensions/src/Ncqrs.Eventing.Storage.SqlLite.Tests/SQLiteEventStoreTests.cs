@@ -73,9 +73,8 @@ namespace Ncqrs.Eventing.Storage.SQLite.Tests{
             eventSource.Stub(e => e.InitialVersion).Return(0);
             eventSource.Stub(e => e.Version).Return(events.Length);
             eventSource.Stub(e => e.GetUncommittedEvents()).Return(events);
-
             _store.Save(eventSource);
-
+            
             var result=_store.GetAllEvents(id);
             result.Count().Should().Be(events.Length);
             result.First().EventIdentifier.Should().Be(events.First().EventIdentifier);

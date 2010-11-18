@@ -94,6 +94,7 @@
     <Compile Include="Commanding\CommandExecution\Mapping\Attributes\AggregateRootIdAttributeTests.cs" />
     <Compile Include="Commanding\CommandExecution\Mapping\Fluent\FluentCommandMappingTests.cs" />
     <Compile Include="Commanding\CommandExecution\Mapping\MappingForCommandNotFoundExceptionTests.cs" />
+    <Compile Include="Commanding\CommandExecutorBaseTests.cs" />
     <Compile Include="Commanding\ExecutorForCommandNotFoundExceptionTests.cs" />
     <Compile Include="Commanding\ServiceModel\CommandServiceBaseTests.cs" />
     <Compile Include="Commanding\TransactionalCommandExecutorWrapperTests.cs" />
@@ -102,8 +103,10 @@
     <Compile Include="Domain\AggregateRootMappedWithAttributesTests.cs" />
     <Compile Include="Domain\AggregateRootTests.cs" />
     <Compile Include="Domain\AggregateRootMappedByExpressionTests.cs" />
+    <Compile Include="Domain\EntityTests.cs" />
     <Compile Include="Domain\SourcedEventHanderTests.cs" />
     <Compile Include="Domain\EventNotHandledExceptionTests.cs" />
+    <Compile Include="Domain\SourcedEventHandlerPredicate.cs" />
     <Compile Include="Domain\Storage\SimpleAggregateRootCreationStrategyTests.cs" />
     <Compile Include="Eventing\Sourcing\Mapping\AttributeBasedDomainEventHandlerMappingStrategyTests.cs" />
     <Compile Include="Eventing\Sourcing\Mapping\ConventionBasedDomainEventHandlerMappingStrategyTests.cs" />
@@ -115,6 +118,17 @@
     <Compile Include="Eventing\Sourcing\SourcedEventStreamTests.cs" />
     <Compile Include="Eventing\Storage\AttributeEventTypeResolverTests.cs" />
     <Compile Include="Eventing\Storage\ConcurrencyExceptionSpecs.cs" />
+    <Compile Include="Eventing\Storage\NoDB\EventStoreTests\NoDBEventStoreTests.cs" />
+    <Compile Include="Eventing\Storage\NoDB\EventStoreTests\when_getting_all_events_for_an_event_source.cs" />
+    <Compile Include="Eventing\Storage\NoDB\EventStoreTests\when_getting_the_events_since_a_specific_version.cs" />
+    <Compile Include="Eventing\Storage\NoDB\EventStoreTests\when_saving_a_new_event_source.cs" />
+    <Compile Include="Eventing\Storage\NoDB\EventStoreTests\when_saving_events_based_on_stale_state.cs" />
+    <Compile Include="Eventing\Storage\NoDB\Fakes\CustomerCreatedEvent.cs" />
+    <Compile Include="Eventing\Storage\NoDB\Fakes\CustomerNameChanged.cs" />
+    <Compile Include="Eventing\Storage\NoDB\Fakes\TestSnapshot.cs" />
+    <Compile Include="Eventing\Storage\NoDB\SnapshotStoreTests\NoDBSnapshotStoreTestFixture.cs" />
+    <Compile Include="Eventing\Storage\NoDB\SnapshotStoreTests\when_getting_the_snapshot.cs" />
+    <Compile Include="Eventing\Storage\NoDB\SnapshotStoreTests\when_saving_a_new_snapshot.cs" />
     <Compile Include="Eventing\Storage\PropertyBagConverterTests.cs" />
     <Compile Include="Eventing\Storage\PropertyBagTests.cs" />
     <Compile Include="Eventing\Storage\Serialization\EventConverterTests.cs" />

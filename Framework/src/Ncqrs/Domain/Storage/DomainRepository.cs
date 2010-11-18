@@ -28,9 +28,13 @@ namespace Ncqrs.Domain.Storage
             _aggregateRootCreator = aggregateRootCreationStrategy ?? new SimpleAggregateRootCreationStrategy();
         }
 
+        //Creates a snapshot if the 
         private bool ShouldCreateSnapshot(AggregateRoot aggregateRoot)
         {
-            return (_snapshotStore != null)&&(aggregateRoot.Version % SnapshotIntervalInEvents) == 0;
+            if (_snapshotStore != null)
+                for (var i = aggregateRoot.InitialVersion + 1; i <= aggregateRoot.Version; i++)
+                    if (i % SnapshotIntervalInEvents == 0) return true;
+            return false;
         }
 
         /// <summary>
@@ -145,20 +149,17 @@ namespace Ncqrs.Domain.Storage
         private bool AggregateRootSupportsSnapshot(Type aggType, ISnapshot snapshot)
         {
             var memType = GetSnapshotInterfaceType(aggType);
-            return memType == typeof(ISnapshotable<>).MakeGenericType(memType);
+            var snapshotType = snapshot.GetType();
+
+            var expectedType = typeof (ISnapshotable<>).MakeGenericType(snapshotType);
+            return memType == expectedType;
         }
 
         public void Save(AggregateRoot aggregateRoot)
         {
             var events = aggregateRoot.GetUncommittedEvents();
-
             _store.Save(aggregateRoot);
-
             _eventBus.Publish(events);
-
-            // Accept the changes.
-            aggregateRoot.AcceptChanges();
-
             // TODO: Snapshot should not effect saving.
             if (ShouldCreateSnapshot(aggregateRoot))
             {
@@ -166,6 +167,7 @@ namespace Ncqrs.Domain.Storage
 
                 if (snapshot != null) _snapshotStore.SaveShapshot(snapshot);
             }
+            aggregateRoot.AcceptChanges();
         }
 
         private ISnapshot GetSnapshot(AggregateRoot aggregateRoot)
@@ -175,7 +177,6 @@ namespace Ncqrs.Domain.Storage
             if (memType != null)
             {
                 var createMethod = memType.GetMethod("CreateSnapshot");
-
                 return (ISnapshot)createMethod.Invoke(aggregateRoot, new object[0]);
             }
             else

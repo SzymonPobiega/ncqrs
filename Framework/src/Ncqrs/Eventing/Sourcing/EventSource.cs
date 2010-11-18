@@ -91,6 +91,12 @@ namespace Ncqrs.Eventing.Sourcing
             EventSourceId = idGenerator.GenerateNewId();
         }
 
+        protected EventSource(Guid eventSourceId)
+        {
+            InitialVersion = 0;
+            EventSourceId = eventSourceId;
+        }
+
         [ContractInvariantMethod]
         private void ContractInvariants()
         {
@@ -118,7 +124,7 @@ namespace Ncqrs.Eventing.Sourcing
             }
         }
 
-        protected void RegisterHandler(ISourcedEventHandler handler)
+        internal protected void RegisterHandler(ISourcedEventHandler handler)
         {
             Contract.Requires<ArgumentNullException>(handler != null, "The handler cannot be null.");
 
@@ -130,7 +136,13 @@ namespace Ncqrs.Eventing.Sourcing
             Contract.Requires<ArgumentNullException>(evnt != null, "The Event cannot be null.");
             Boolean handled = false;
 
-            foreach (var handler in _eventHandlers)
+            // Get a copy of the handlers because an event
+            // handler can register a new handler. This will
+            // cause the _eventHandlers list to be modified.
+            // And modification while iterating it not allowed.
+            var handlers = new List<ISourcedEventHandler>(_eventHandlers);
+
+            foreach (var handler in handlers)
             {
                 handled |= handler.HandleEvent(evnt);
             }
@@ -139,7 +151,7 @@ namespace Ncqrs.Eventing.Sourcing
                 throw new EventNotHandledException(evnt);
         }
 
-        protected void ApplyEvent(SourcedEvent evnt)
+        internal protected void ApplyEvent(SourcedEvent evnt)
         {
             if (evnt.EventSourceId != SourcedEvent.UndefinedEventSourceId)
             {
@@ -161,10 +173,6 @@ namespace Ncqrs.Eventing.Sourcing
             evnt.EventSourceId = EventSourceId;
             evnt.EventSequence = Version + 1;
 
-            // First handle event. This to support the set of the
-            // Id property for the first event. If we first Append
-            // the event to the event stream, the handler cannot set
-            // the Id property anymore.
             HandleEvent(evnt);
 
             _uncommittedEvents.Append(evnt);

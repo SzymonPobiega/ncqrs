@@ -30,24 +30,24 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
     /// </code>
     /// </remarks>
     /// </summary>
-    public class ExpressionBasedSourcedEventHandlerMappingStrategy : ISourcedEventHandlerMappingStrategy
+    public class ExpressionBasedEventHandlerMappingStrategy : IEventHandlerMappingStrategy
     {
         /// <summary>
         /// Gets the event handlers from aggregate root based on the given mapping.
         /// </summary>
-        /// <param name="eventSource">The aggregate root.</param>
-        /// <see cref="ExpressionBasedSourcedEventHandlerMappingStrategy"/>
+        /// <param name="target">The aggregate root.</param>
+        /// <see cref="ExpressionBasedEventHandlerMappingStrategy"/>
         /// <returns>All the <see cref="ISourcedEventHandler"/>'s created based on the given mapping.</returns>
-        public IEnumerable<ISourcedEventHandler> GetEventHandlersFromAggregateRoot(IEventSource eventSource)
+        public IEnumerable<ISourcedEventHandler> GetEventHandlers(object target)
         {
-            Contract.Requires<ArgumentNullException>(eventSource != null, "The eventSource cannot be null.");
+            Contract.Requires<ArgumentNullException>(target != null, "The target cannot be null.");
 
-            if(!(eventSource is AggregateRootMappedWithExpressions))
-                throw new ArgumentException("aggregateRoot need to be of type AggregateRootMappedWithExpressions to be used in a ExpressionBasedSourcedEventHandlerMappingStrategy.");
+            if(!(target is AggregateRootMappedWithExpressions))
+                throw new ArgumentException("aggregateRoot need to be of type AggregateRootMappedWithExpressions to be used in a ExpressionBasedEventHandlerMappingStrategy.");
 
             var handlers = new List<ISourcedEventHandler>();
 
-            foreach (ExpressionHandler mappinghandler in ((AggregateRootMappedWithExpressions)eventSource).MappingHandlers)
+            foreach (ExpressionHandler mappinghandler in ((AggregateRootMappedWithExpressions)target).MappingHandlers)
             {
                 if (mappinghandler.ActionMethodInfo.IsStatic)
                 {
@@ -55,7 +55,7 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
                     throw new InvalidEventHandlerMappingException(message);
                 }
 
-                var handler = CreateHandlerForMethod(eventSource, mappinghandler.ActionMethodInfo, mappinghandler.Exact);
+                var handler = CreateHandlerForMethod(target, mappinghandler.ActionMethodInfo, mappinghandler.Exact);
                 handlers.Add(handler);
             }
 
@@ -69,7 +69,7 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
         /// <param name="method">The method to invoke</param>
         /// <param name="exact"><b>True</b> if we need to have an exact match, otherwise <b>False</b>.</param>
         /// <returns>An <see cref="ISourcedEventHandler"/> that handles the execution of the given method.</returns>
-        private static ISourcedEventHandler CreateHandlerForMethod(IEventSource eventSource, MethodInfo method, bool exact)
+        private static ISourcedEventHandler CreateHandlerForMethod(object eventSource, MethodInfo method, bool exact)
         {
             Type firstParameterType = method.GetParameters().First().ParameterType;
 
