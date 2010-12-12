@@ -2,11 +2,11 @@
 obj
 bin
 *.csproj.user
+*.suo
 
 # Resharper
 *ReSharper*
 *resharper*
-*.suo
 *.cache
 
 # Other useful stuff
@@ -16,8 +16,10 @@ bin
 *.log
 *.swp
 *.user
+*.DS_Store
 
 # Ncqrs in non framework solution
 /Extensions/lib/Ncqrs/*
 /Samples/MyNotes/lib/*
+/lib/*
 release

@@ -8,11 +8,13 @@ namespace Ncqrs.Eventing.Storage.NoDB.Tests.EventStoreTests
     [TestFixture]
     public class when_getting_all_events_for_an_event_source : NoDBEventStoreTestFixture
     {
-        private SourcedEvent[] _returnedEvents;
+        private ISourcedEvent[] _returnedEvents;
 
         [TestFixtureSetUp]
         public void SetUp()
         {
+            BaseSetup();
+
             _returnedEvents = EventStore.GetAllEvents(Source.EventSourceId).ToArray();
         }
 

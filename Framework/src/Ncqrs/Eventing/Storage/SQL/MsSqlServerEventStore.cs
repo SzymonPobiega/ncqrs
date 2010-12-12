@@ -43,7 +43,7 @@ namespace Ncqrs.Eventing.Storage.SQL
         /// </summary>
         /// <param name="id">The id of the event provider.</param>
         /// <returns>All events for the specified event provider.</returns>
-        public IEnumerable<SourcedEvent> GetAllEvents(Guid id)
+        public IEnumerable<ISourcedEvent> GetAllEvents(Guid id)
         {
             return GetAllEventsSinceVersion(id, FirstVersion);
         }
@@ -53,9 +53,9 @@ namespace Ncqrs.Eventing.Storage.SQL
         /// </summary>
         /// <param name="eventSourceId">The id of the event source that owns the events.</param>
         /// <returns>All the events from the event source.</returns>
-        public IEnumerable<SourcedEvent> GetAllEventsSinceVersion(Guid id, long version)
+        public IEnumerable<ISourcedEvent> GetAllEventsSinceVersion(Guid id, long version)
         {
-            var result = new List<SourcedEvent>();
+            var result = new List<ISourcedEvent>();
 
             // Create connection and command.
             using (var connection = new SqlConnection(_connectionString))
@@ -356,7 +356,7 @@ namespace Ncqrs.Eventing.Storage.SQL
             var eventVersion = Version.Parse((string)reader["Version"]);
             var eventSourceId = (Guid)reader["EventSourceId"];
             var eventSequence = (long)reader["Sequence"];
-            var data = Encoding.UTF8.GetString((Byte[])reader["Data"]);
+            var data = (String)reader["Data"];
 
             return new StoredEvent<string>(
                 eventIdentifier,
@@ -398,7 +398,6 @@ namespace Ncqrs.Eventing.Storage.SQL
 
             var document = _formatter.Serialize(evnt);
             var raw = _translator.TranslateToRaw(document);
-            var data = Encoding.UTF8.GetBytes(raw.Data);
 
             using (var command = new SqlCommand(Queries.InsertNewEventQuery, transaction.Connection))
             {
@@ -409,7 +408,7 @@ namespace Ncqrs.Eventing.Storage.SQL
                 command.Parameters.AddWithValue("Name", raw.EventName);
                 command.Parameters.AddWithValue("Version", raw.EventVersion.ToString());
                 command.Parameters.AddWithValue("Sequence", raw.EventSequence);
-                command.Parameters.AddWithValue("Data", data);
+                command.Parameters.AddWithValue("Data", raw.Data);
                 command.ExecuteNonQuery();
             }
         }

@@ -107,7 +107,7 @@ namespace Ncqrs.Eventing.Sourcing
         /// Initializes from history.
         /// </summary>
         /// <param name="history">The history.</param>
-        public virtual void InitializeFromHistory(IEnumerable<SourcedEvent> history)
+        public virtual void InitializeFromHistory(IEnumerable<ISourcedEvent> history)
         {
             Contract.Requires<ArgumentNullException>(history != null, "The history cannot be null.");
             if (_uncommittedEvents.Count > 0) throw new InvalidOperationException("Cannot apply history when instance has uncommitted changes.");
@@ -131,7 +131,7 @@ namespace Ncqrs.Eventing.Sourcing
             _eventHandlers.Add(handler);
         }
 
-        protected virtual void HandleEvent(SourcedEvent evnt)
+        protected virtual void HandleEvent(ISourcedEvent evnt)
         {
             Contract.Requires<ArgumentNullException>(evnt != null, "The Event cannot be null.");
             Boolean handled = false;
@@ -151,36 +151,22 @@ namespace Ncqrs.Eventing.Sourcing
                 throw new EventNotHandledException(evnt);
         }
 
-        internal protected void ApplyEvent(SourcedEvent evnt)
+        internal protected void ApplyEvent(ISourcedEvent evnt)
         {
-            if (evnt.EventSourceId != SourcedEvent.UndefinedEventSourceId)
-            {
-                var message = String.Format("The {0} event cannot be applied to event source {1} with id {2} " +
-                                            "since it was already owned by event source with id {3}.",
-                                            evnt.GetType().FullName, this.GetType().FullName, EventSourceId, evnt.EventSourceId);
-                throw new InvalidOperationException(message);
-            }
-
-            if (evnt.EventSequence != SourcedEvent.UndefinedEventSequence)
-            {
-                // TODO: Add better exception message.
-                var message = String.Format("The {0} event cannot be applied to event source {1} with id {2} " +
-                            "since the event already contains a sequence {3} while {4} was expected.",
-                            evnt.GetType().FullName, this.GetType().FullName, EventSourceId, evnt.EventSequence, SourcedEvent.UndefinedEventSequence);
-                throw new InvalidOperationException(message);
-            }
-
-            evnt.EventSourceId = EventSourceId;
-            evnt.EventSequence = Version + 1;
+            _uncommittedEvents.Append(evnt);
 
             HandleEvent(evnt);
-
-            _uncommittedEvents.Append(evnt);
             
             OnEventApplied(evnt);
         }
 
-        private void ApplyEventFromHistory(SourcedEvent evnt)
+        private void ApplyEventFromHistory(ISourcedEvent evnt)
+        {
+            ValidateHistoricalEvent(evnt);
+            HandleEvent(evnt);
+        }
+
+        private void ValidateHistoricalEvent(ISourcedEvent evnt)
         {
             if (evnt.EventSourceId != EventSourceId)
             {
@@ -195,11 +181,9 @@ namespace Ncqrs.Eventing.Sourcing
                                             evnt.EventSequence, InitialVersion, InitialVersion + 1);
                 throw new InvalidOperationException(message);
             }
-
-            HandleEvent(evnt);
         }
 
-        public IEnumerable<SourcedEvent> GetUncommittedEvents()
+        public IEnumerable<ISourcedEvent> GetUncommittedEvents()
         {
             Contract.Ensures(Contract.Result<IEnumerable<SourcedEvent>>() != null, "The result of this method should never be null.");
 
@@ -219,7 +203,7 @@ namespace Ncqrs.Eventing.Sourcing
             InitialVersion = newInitialVersion;
         }
 
-        protected virtual void OnEventApplied(SourcedEvent appliedEvent)
+        protected virtual void OnEventApplied(ISourcedEvent appliedEvent)
         {
             // Nothing to do. Allow override from subclassers.
         }

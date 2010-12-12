@@ -5,11 +5,11 @@ using System.Collections;
 
 namespace Ncqrs.Eventing.Sourcing
 {
-    public class SourcedEventStream : IEnumerable<SourcedEvent>
+    public class SourcedEventStream : IEnumerable<ISourcedEvent>
     {
         private Guid _eventSourceId;
         private long _sequenceOffset;
-        private readonly IList<SourcedEvent> _events = new List<SourcedEvent>();
+        private readonly IList<ISourcedEvent> _events = new List<ISourcedEvent>();
 
         /// <summary>
         /// Gets or sets the id of the <see cref="IEventSource"/> that owns the events.
@@ -34,7 +34,7 @@ namespace Ncqrs.Eventing.Sourcing
         }
 
         /// <summary>
-        /// Gets the last sequence in this stream.
+        /// Gets the last sequence in this stream. This respects the <see cref="SequenceOffset"/> property.
         /// </summary>
         /// <value>The last sequence.</value>
         public long LastSequence
@@ -113,6 +113,29 @@ namespace Ncqrs.Eventing.Sourcing
             Contract.Invariant(Contract.ForAll(_events, (sourcedEvent) => sourcedEvent.EventSequence == (_sequenceOffset + _events.IndexOf(sourcedEvent) + 1)));
         }
 
+        protected void ClaimEvent(ISourcedEvent evnt)
+        {
+            if (evnt.EventSourceId != UndefinedValues.UndefinedEventSourceId)
+            {
+                var message = String.Format("The {0} event cannot be applied to event source {1} with id {2} " +
+                                            "since it was already owned by event source with id {3}.",
+                                            evnt.GetType().FullName, this.GetType().FullName, EventSourceId, evnt.EventSourceId);
+                throw new InvalidOperationException(message);
+            }
+
+            if (evnt.EventSequence != UndefinedValues.UndefinedEventSequence)
+            {
+                // TODO: Add better exception message.
+                var message = String.Format("The {0} event cannot be applied to event source {1} with id {2} " +
+                            "since the event already contains a sequence {3} while {4} was expected.",
+                            evnt.GetType().FullName, this.GetType().FullName, EventSourceId, evnt.EventSequence, UndefinedValues.UndefinedEventSequence);
+                throw new InvalidOperationException(message);
+            }
+
+            var nextSequence = LastSequence + 1;
+            evnt.ClaimEvent(EventSourceId, nextSequence);
+        }
+
         /// <summary>
         /// Appends the specified sourced event to this steam.
         /// </summary>
@@ -120,14 +143,14 @@ namespace Ncqrs.Eventing.Sourcing
         /// <exception cref="ArgumentException">Occurs when <paramref name="sourcedEvent.EventSourceId"/> is not owned set to the <see cref="EventSourceId"/> property of this stream.</exception>
         /// <exception cref="ArgumentException">Occurs when <paramref name="sourcedEvent.Sequence"/> is not set to <see cref="LastSequence"/><c>+1</c>.</exception>
         /// <param name="sourcedEvent">The sourced event.</param>
-        public void Append(SourcedEvent sourcedEvent)
+        public void Append(ISourcedEvent sourcedEvent)
         {
-            ValidateSourcedEvent(sourcedEvent);
+            ClaimEvent(sourcedEvent);
 
             _events.Add(sourcedEvent);
         }
 
-        public void Append(IEnumerable<SourcedEvent> events)
+        public void Append(IEnumerable<ISourcedEvent> events)
         {
             if (events == null) throw new ArgumentNullException("events");
 
@@ -137,7 +160,7 @@ namespace Ncqrs.Eventing.Sourcing
             }
         }
 
-        private void ValidateSourcedEvent(SourcedEvent sourcedEvent)
+        private void ValidateSourcedEvent(ISourcedEvent sourcedEvent)
         {
             if (sourcedEvent == null) throw new ArgumentNullException("sourcedEvent");
 
@@ -168,7 +191,7 @@ namespace Ncqrs.Eventing.Sourcing
             _events.Clear();
         }
 
-        public IEnumerator<SourcedEvent> GetEnumerator()
+        public IEnumerator<ISourcedEvent> GetEnumerator()
         {
             return _events.GetEnumerator();
         }

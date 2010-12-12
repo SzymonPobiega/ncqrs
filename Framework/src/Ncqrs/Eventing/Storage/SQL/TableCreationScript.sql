@@ -10,7 +10,7 @@
 	[EventSourceId] [uniqueidentifier] NOT NULL,
 	[Sequence] [bigint], 
 
-	[Data] [varbinary](max) NOT NULL
+	[Data] [nvarchar](max) NOT NULL
 ) ON [PRIMARY]
 GO
 
