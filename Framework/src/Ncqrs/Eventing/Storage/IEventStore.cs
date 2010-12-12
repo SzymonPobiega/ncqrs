@@ -30,7 +30,7 @@ namespace Ncqrs.Eventing.Storage
         /// </summary>
         /// <exception cref="ConcurrencyException">Occurs when there is already a newer version of the event provider stored in the event store.</exception>
         /// <param name="source">The source that should be saved.</param>
-        void Save(IEventSource source);
+        void Save(IEnumerable<ISourcedEvent> eventStream);
     }
 
     [ContractClassFor(typeof(IEventStore))]
@@ -49,9 +49,9 @@ namespace Ncqrs.Eventing.Storage
             return default(IEnumerable<ISourcedEvent>);
         }
 
-        public void Save(IEventSource source)
+        public void Save(IEnumerable<ISourcedEvent> eventStream)
         {
-            Contract.Requires<ArgumentNullException>(source != null, "source cannot be null.");
+            Contract.Requires<ArgumentNullException>(eventStream != null, "stream cannot be null.");
         }
 
         public IEnumerable<ISourcedEvent> GetAllEventsSinceVersion(Guid id)

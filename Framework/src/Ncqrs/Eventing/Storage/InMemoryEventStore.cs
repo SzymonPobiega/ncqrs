@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Ncqrs.Eventing.Sourcing;
 using Ncqrs.Eventing.Sourcing.Snapshotting;
 
@@ -48,20 +49,26 @@ namespace Ncqrs.Eventing.Storage
             }
         }
 
-        public void Save(IEventSource source)
+        public void Save(IEnumerable<ISourcedEvent> eventsToCommit)
         {
             Queue<ISourcedEvent> events;
-            var eventsToCommit = source.GetUncommittedEvents();
 
-            if (!_events.TryGetValue(source.EventSourceId, out events))
-            {
-                events = new Queue<ISourcedEvent>();
-                _events.Add(source.EventSourceId, events);
-            }
+            var eventsGrouppedById = eventsToCommit.GroupBy(x => x.EventSourceId);
 
-            foreach (var evnt in eventsToCommit)
+            foreach (var eventsFromSource in eventsGrouppedById)
             {
-                events.Enqueue(evnt);
+                Guid eventSourceId = eventsFromSource.Key;
+
+                if (!_events.TryGetValue(eventSourceId, out events))
+                {
+                    events = new Queue<ISourcedEvent>();
+                    _events.Add(eventSourceId, events);
+                }
+
+                foreach (var evnt in eventsToCommit)
+                {
+                    events.Enqueue(evnt);
+                }
             }
         }
 

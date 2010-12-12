@@ -19,8 +19,8 @@ namespace Ncqrs.Eventing.Storage.NoDB.Tests.EventStoreTests
         {
             BaseSetup();
 
-            _foldername = Source.EventSourceId.ToString().Substring(0, 2);
-            _filename = Source.EventSourceId.ToString().Substring(2);
+            _foldername = EventSourceId.ToString().Substring(0, 2);
+            _filename = EventSourceId.ToString().Substring(2);
         }
 
         [Test]
@@ -39,7 +39,7 @@ namespace Ncqrs.Eventing.Storage.NoDB.Tests.EventStoreTests
                 foreach (string line in GetEventStrings(reader))
                 {
                     Console.WriteLine(line);
-                    StoredEvent<JObject> storedevent = line.ReadStoredEvent(Source.EventSourceId, i);
+                    StoredEvent<JObject> storedevent = line.ReadStoredEvent(EventSourceId, i);
                     i++;
                     Assert.That(storedevent, Is.Not.Null);
                     Assert.That(Events.Count(e => e.EventIdentifier == storedevent.EventIdentifier) == 1);

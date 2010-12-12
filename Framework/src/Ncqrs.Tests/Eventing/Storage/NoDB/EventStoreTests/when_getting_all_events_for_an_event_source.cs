@@ -15,7 +15,7 @@ namespace Ncqrs.Eventing.Storage.NoDB.Tests.EventStoreTests
         {
             BaseSetup();
 
-            _returnedEvents = EventStore.GetAllEvents(Source.EventSourceId).ToArray();
+            _returnedEvents = EventStore.GetAllEvents(EventSourceId).ToArray();
         }
 
         [Test]

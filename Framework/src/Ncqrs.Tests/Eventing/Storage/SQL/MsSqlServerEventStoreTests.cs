@@ -149,14 +149,8 @@ namespace Ncqrs.Tests.Eventing.Storage.SQL
                                  new CustomerNameChanged(Guid.NewGuid(), id, sequenceCounter++, DateTime.UtcNow,
                                                          "Name" + sequenceCounter)
                              };
-
-            var eventSource = MockRepository.GenerateMock<IEventSource>();
-            eventSource.Stub(e => e.EventSourceId).Return(id);
-            eventSource.Stub(e => e.InitialVersion).Return(0);
-            eventSource.Stub(e => e.Version).Return(events.Length);
-            eventSource.Stub(e => e.GetUncommittedEvents()).Return(events);
-
-            targetStore.Save(eventSource);
+            
+            targetStore.Save(events);
         }
 
         [Test]
@@ -174,16 +168,10 @@ namespace Ncqrs.Tests.Eventing.Storage.SQL
                                  new CustomerNameChanged(Guid.NewGuid(), id, sequenceCounter++, DateTime.UtcNow,
                                                          "Name" + sequenceCounter)
                              };
+            
+            targetStore.Save(events);
 
-            var eventSource = MockRepository.GenerateMock<IEventSource>();
-            eventSource.Stub(e => e.EventSourceId).Return(id).Repeat.Any();
-            eventSource.Stub(e => e.InitialVersion).Return(0).Repeat.Any();
-            eventSource.Stub(e => e.Version).Return(events.Length).Repeat.Any();
-            eventSource.Stub(e => e.GetUncommittedEvents()).Return(events).Repeat.Any();
-
-            targetStore.Save(eventSource);
-
-            Action act = () => targetStore.Save(eventSource);
+            Action act = () => targetStore.Save(events);
             act.ShouldThrow<ConcurrencyException>();
         }
 
@@ -205,14 +193,8 @@ namespace Ncqrs.Tests.Eventing.Storage.SQL
                                  new CustomerNameChanged(Guid.NewGuid(), id, sequenceCounter++, DateTime.UtcNow,
                                                          "Name" + sequenceCounter)
                              };
-
-            var eventSource = MockRepository.GenerateMock<IEventSource>();
-            eventSource.Stub(e => e.EventSourceId).Return(id);
-            eventSource.Stub(e => e.InitialVersion).Return(0);
-            eventSource.Stub(e => e.Version).Return(events.Length);
-            eventSource.Stub(e => e.GetUncommittedEvents()).Return(events);
-
-            targetStore.Save(eventSource);
+            
+            targetStore.Save(events);
 
             var result = targetStore.GetAllEvents(id);
             result.Count().Should().Be(events.Length);

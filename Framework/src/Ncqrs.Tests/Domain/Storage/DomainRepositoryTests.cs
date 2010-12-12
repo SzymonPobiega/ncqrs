@@ -80,7 +80,7 @@ namespace Ncqrs.Tests.Domain.Storage
                 aggregate.Foo();
                 aggregate.Bar();
 
-                store.Expect(s => s.Save(aggregate));
+                store.Expect(s => s.Save(aggregate.GetUncommittedEvents()));
                 bus.Expect(b => b.Publish((IEnumerable<IEvent>) null)).IgnoreArguments();
 
                 var repository = new DomainRepository(store, bus);

@@ -74,8 +74,6 @@ namespace Ncqrs.Tests.Eventing.Storage
         public void When_getting_all_event_from_an_existing_event_source_the_result_should_be_all_events_stored_for_that_event_source()
         {
             var eventSourceId = Guid.NewGuid();
-            var mock = new EventSourceMock();
-            mock.EventSourceId = eventSourceId;
 
             var store = new InMemoryEventStore();
 
@@ -88,11 +86,8 @@ namespace Ncqrs.Tests.Eventing.Storage
                                   new SomethingDoneEvent(eventSourceId), new SomethingDoneEvent(eventSourceId), new SomethingDoneEvent(eventSourceId)
                               };
 
-            mock.GetUncommittedEventsStub = () => events1;
-            store.Save(mock);
-
-            mock.GetUncommittedEventsStub = () => events2;
-            store.Save(mock);
+            store.Save(events1);
+            store.Save(events2);
 
             var events = store.GetAllEvents(eventSourceId);
             var unionOfStoredEvents = events1.Union(events2);

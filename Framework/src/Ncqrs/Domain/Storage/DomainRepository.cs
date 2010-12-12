@@ -147,7 +147,7 @@ namespace Ncqrs.Domain.Storage
         public void Save(AggregateRoot aggregateRoot)
         {
             var events = aggregateRoot.GetUncommittedEvents();
-            _store.Save(aggregateRoot);
+            _store.Save(events);
             _eventBus.Publish(events);
             // TODO: Snapshot should not effect saving.
             if (ShouldCreateSnapshot(aggregateRoot))
