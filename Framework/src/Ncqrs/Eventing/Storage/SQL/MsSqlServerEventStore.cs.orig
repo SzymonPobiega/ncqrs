@@ -80,6 +80,7 @@ namespace Ncqrs.Eventing.Storage.SQL
             return result;
         }
 
+<<<<<<< HEAD
         /// <summary>
         /// Get some events after specified event.
         /// </summary>
@@ -113,6 +114,11 @@ namespace Ncqrs.Eventing.Storage.SQL
                             SourcedEvent evnt = ReadSourcedEvent(reader);
                             result.Add(evnt);
                         }
+=======
+                        var evnt = (ISourcedEvent) _formatter.Deserialize(document);
+                        evnt.InitializeFrom(rawEvent);
+                        result.Add(evnt);
+>>>>>>> local-ncqrs/development
                     }
                 }
             }
@@ -128,7 +134,11 @@ namespace Ncqrs.Eventing.Storage.SQL
             _converter.Upgrade(document);
 
             var evnt = (SourcedEvent) _formatter.Deserialize(document);
-            evnt.InitializeFrom(rawEvent);            
+            evnt.EventIdentifier = document.EventIdentifier;
+            evnt.EventTimeStamp = document.EventTimeStamp;
+            evnt.EventVersion = document.EventVersion;
+            evnt.EventSourceId = document.EventSourceId;
+            evnt.EventSequence = document.EventSequence;
             return evnt;
         }
 
