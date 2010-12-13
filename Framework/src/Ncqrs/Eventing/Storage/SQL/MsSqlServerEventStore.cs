@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics.Contracts;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Reflection;
 using System.Text;
@@ -87,14 +88,12 @@ namespace Ncqrs.Eventing.Storage.SQL
         }
 
         /// <summary>
-        /// Saves all events from an event provider.
+        /// Saves all events from the stream.
         /// </summary>
-        /// <param name="provider">The eventsource.</param>
-        public void Save(IEventSource eventSource)
+        /// <param name="events">The events.</param>
+        public void Save(IEnumerable<ISourcedEvent> events)
         {
-            // Get all events.
-            IEnumerable<ISourcedEvent> events = eventSource.GetUncommittedEvents();
-
+ 
             // Create new connection.
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -105,24 +104,33 @@ namespace Ncqrs.Eventing.Storage.SQL
                 {
                     try
                     {
-                        // Get the current version of the event provider.
-                        int? currentVersion = GetVersion(eventSource.EventSourceId, transaction);
+                        var eventsGrouppedById = events.GroupBy(x => x.EventSourceId);           
 
-                        // Create new event provider when it is not found.
-                        if (currentVersion == null)
+                        foreach (var eventsFromSource in eventsGrouppedById)
                         {
-                            AddEventSource(eventSource, transaction);
-                        }
-                        else if (currentVersion.Value != eventSource.InitialVersion)
-                        {
-                            throw new ConcurrencyException(eventSource.EventSourceId, eventSource.Version);
-                        }
+                            var initialVersion = eventsFromSource.First().EventSequence - 1;
+                            var version = eventsFromSource.Last().EventSequence;
 
-                        // Save all events to the store.
-                        SaveEvents(events, transaction);
+                            // Get the current version of the event provider.
+                            Guid eventSourceId = eventsFromSource.Key;
+                            int? currentVersion = GetVersion(eventSourceId, transaction);
 
-                        // Update the version of the provider.
-                        UpdateEventSourceVersion(eventSource, transaction);
+                            // Create new event provider when it is not found.
+                            if (currentVersion == null)
+                            {
+                                AddEventSource(eventSourceId, version, transaction);
+                            }
+                            else if (currentVersion.Value != initialVersion)
+                            {
+                                throw new ConcurrencyException(eventSourceId, version);
+                            }
+
+                            // Save all events to the store.
+                            SaveEvents(events, transaction);
+
+                            // Update the version of the provider.
+                            UpdateEventSourceVersion(eventSourceId, version, transaction);
+                        }
 
                         // Everything is handled, commint transaction.
                         transaction.Commit();
@@ -214,29 +222,7 @@ namespace Ncqrs.Eventing.Storage.SQL
             }
 
             return theSnapshot;
-        }
-
-        public IEnumerable<Guid> GetAllIdsForType(Type eventProviderType)
-        {
-            var ids = new List<Guid>();
-
-            using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand(Queries.SelectAllIdsForTypeQuery, connection))
-            {
-                command.Parameters.AddWithValue("Type", eventProviderType.FullName);
-                connection.Open();
-
-                using (SqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        ids.Add((Guid)reader[0]);
-                    }
-                }
-            }
-
-            return ids;
-        }
+        }        
 
         public void RemoveUnusedProviders()
         {
@@ -256,13 +242,13 @@ namespace Ncqrs.Eventing.Storage.SQL
             }
         }
 
-        private void UpdateEventSourceVersion(IEventSource eventSource, SqlTransaction transaction)
+        private void UpdateEventSourceVersion(Guid eventSourceId, long version, SqlTransaction transaction)
         {
             using (var command = new SqlCommand(Queries.UpdateEventSourceVersionQuery, transaction.Connection))
             {
                 command.Transaction = transaction;
-                command.Parameters.AddWithValue("Id", eventSource.EventSourceId);
-                command.Parameters.AddWithValue("NewVersion", eventSource.Version);
+                command.Parameters.AddWithValue("Id", eventSourceId);
+                command.Parameters.AddWithValue("NewVersion", version);
                 command.ExecuteNonQuery();
             }
         }
@@ -335,16 +321,16 @@ namespace Ncqrs.Eventing.Storage.SQL
         /// <summary>
         /// Adds the event source to the event store.
         /// </summary>
-        /// <param name="eventSource">The event source to add.</param>
+        /// <param name="version">Current version of event source to add.</param>
         /// <param name="transaction">The transaction.</param>
-        private static void AddEventSource(IEventSource eventSource, SqlTransaction transaction)
+        /// <param name="eventSourceId">Id of event source to add.</param>
+        private static void AddEventSource(Guid eventSourceId, long version, SqlTransaction transaction)
         {
             using (var command = new SqlCommand(Queries.InsertNewProviderQuery, transaction.Connection))
             {
                 command.Transaction = transaction;
-                command.Parameters.AddWithValue("Id", eventSource.EventSourceId);
-                command.Parameters.AddWithValue("Type", eventSource.GetType().ToString());
-                command.Parameters.AddWithValue("Version", eventSource.Version);
+                command.Parameters.AddWithValue("Id", eventSourceId);
+                command.Parameters.AddWithValue("Version", version);
                 command.ExecuteNonQuery();
             }
         }

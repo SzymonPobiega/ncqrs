@@ -15,7 +15,7 @@ GO
 
 CREATE TABLE [dbo].[EventSources]
 (
-	[Id] [uniqueidentifier] NOT NULL, [Type] [nvarchar](255) NOT NULL, [Version] [int] NOT NULL
+	[Id] [uniqueidentifier] NOT NULL, [Version] [int] NOT NULL
 ) ON [PRIMARY]
 GO
 

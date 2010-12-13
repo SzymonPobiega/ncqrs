@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using Ncqrs.Domain.Storage;
+using Ncqrs.Eventing.Sourcing;
 
 namespace Ncqrs.Domain
 {
@@ -14,9 +15,9 @@ namespace Ncqrs.Domain
         private static UnitOfWork _threadInstance;
 
         /// <summary>
-        /// A queue that holds a reference to all instances that have themself registered as a dirty instance during the lifespan of this unit of work instance.
+        /// The list of all the event that occured during this unit of work.
         /// </summary>
-        private readonly Queue<AggregateRoot> _dirtyInstances;
+        private readonly List<ISourcedEvent> _dirtyEvents;
 
         /// <summary>
         /// A reference to the repository that is associated with this instance.
@@ -73,33 +74,22 @@ namespace Ncqrs.Domain
             Contract.Ensures(IsDisposed == false);
 
             _repository = domainRepository;
-            _dirtyInstances = new Queue<AggregateRoot>();
+            _dirtyEvents = new List<ISourcedEvent>();
             _threadInstance = this;
             IsDisposed = false;
-
-            InitializeAppliedEventHandler();
         }
 
-        private void InitializeAppliedEventHandler()
+        internal void RegisterEvent(ISourcedEvent evnt)
         {
-            AggregateRoot.EventApplied += AggregateRootEventAppliedHandler;
-        }
+            Contract.Requires<ArgumentNullException>(evnt != null, "The event cannot be null.");
 
-        private void DestroyAppliedEventHandler()
-        {
-            AggregateRoot.EventApplied -= AggregateRootEventAppliedHandler;            
-        }
-
-        private void AggregateRootEventAppliedHandler(object sender, Eventing.Sourcing.EventAppliedArgs e)
-        {
-            var aggregateRoot = (AggregateRoot) sender;
-            RegisterDirtyInstance(aggregateRoot);
+            _dirtyEvents.Add(evnt);
         }
 
         [ContractInvariantMethod]
         private void ContractInvariants()
         {
-            Contract.Invariant(Contract.ForAll(_dirtyInstances, (instance => instance != null)), "None of the dirty instances can be null.");
+            Contract.Invariant(Contract.ForAll(_dirtyEvents, (instance => instance != null)), "None of the dirty events can be null.");
         }
 
         /// <summary>
@@ -134,7 +124,6 @@ namespace Ncqrs.Domain
             {
                 if (disposing)
                 {
-                    DestroyAppliedEventHandler();
                     _threadInstance = null;
                 }
 
@@ -173,33 +162,13 @@ namespace Ncqrs.Domain
         }
 
         /// <summary>
-        /// Registers the dirty.
-        /// </summary>
-        /// <param name="dirtyInstance">The dirty instance.</param>
-        private void RegisterDirtyInstance(AggregateRoot dirtyInstance)
-        {
-            Contract.Requires<ArgumentNullException>(dirtyInstance != null, "dirtyInstance could not be null.");
-
-            if (!_dirtyInstances.Contains(dirtyInstance))
-            {
-                _dirtyInstances.Enqueue(dirtyInstance);
-            }
-        }
-
-        /// <summary>
         /// Accepts the unit of work and persist the changes.
         /// </summary>
         public void Accept()
         {
             Contract.Requires<ObjectDisposedException>(!IsDisposed);
 
-            while (_dirtyInstances.Count > 0)
-            {
-                var dirtyInstance = _dirtyInstances.Dequeue();
-
-                Contract.Assume(dirtyInstance != null);
-                _repository.Save(dirtyInstance);
-            }
+            _repository.Save(_dirtyEvents);
        }
     }
 }

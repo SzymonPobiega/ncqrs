@@ -53,43 +53,68 @@ namespace Ncqrs.Eventing.Storage.NoDB
             }
         }
 
-        public void Save(IEventSource source)
+        public void Save(IEnumerable<ISourcedEvent> events)
         {
-            FileInfo file = source.EventSourceId.GetEventStoreFileInfo(_path);
-            if (!file.Exists && !file.Directory.Exists)
-                file.Directory.Create();
+            var eventsGrouppedById = events.GroupBy(x => x.EventSourceId);
+            var locks = new List<Guid>();
+
             try
             {
-                source.EventSourceId.GetWriteLock();
-                if (file.Exists)
+                foreach (var eventsFromSource in eventsGrouppedById)
                 {
-                    if (GetVersion(source.EventSourceId) > source.InitialVersion)
+                    var initialVersion = eventsFromSource.First().EventSequence - 1;
+                    var version = eventsFromSource.Last().EventSequence;
+
+                    // Get the current version of the event provider.
+                    Guid eventSourceId = eventsFromSource.Key;
+
+                    FileInfo file = eventSourceId.GetEventStoreFileInfo(_path);
+                    if (!file.Exists && !file.Directory.Exists)
+                        file.Directory.Create();
+
+                    eventSourceId.GetWriteLock();
+                    locks.Add(eventSourceId);
+
+                    if (file.Exists)
                     {
-                        throw new ConcurrencyException(source.EventSourceId, source.Version);
+                        if (GetVersion(eventSourceId) > initialVersion)
+                        {
+                            throw new ConcurrencyException(eventSourceId, version);
+                        }
                     }
                 }
-                using (var writer = file.OpenWrite())
+
+                foreach (var eventsFromSource in eventsGrouppedById)
                 {
-                    writer.Seek(0, SeekOrigin.End);
-                    var indicies = new long[source.GetUncommittedEvents().Count()];
-                    var i = 0;
-                    var index = writer.Position;
-                    foreach (SourcedEvent sourcedEvent in source.GetUncommittedEvents())
+                    Guid eventSourceId = eventsFromSource.Key;
+                    FileInfo file = eventSourceId.GetEventStoreFileInfo(_path);
+
+                    using (var writer = file.OpenWrite())
                     {
-                        StoredEvent<JObject> storedEvent = _formatter.Serialize(sourcedEvent);
-                        var bytes = storedEvent.GetBytes();
-                        writer.Write(BitConverter.GetBytes(bytes.Length), 0, 4);
-                        writer.Write(bytes, 0, bytes.Length);
-                        indicies[i++] = index;
-                        index += bytes.Length;
+                        writer.Seek(0, SeekOrigin.End);
+                        var indicies = new long[eventsFromSource.Count()];
+                        var i = 0;
+                        var index = writer.Position;
+                        foreach (SourcedEvent sourcedEvent in eventsFromSource)
+                        {
+                            StoredEvent<JObject> storedEvent = _formatter.Serialize(sourcedEvent);
+                            var bytes = storedEvent.GetBytes();
+                            writer.Write(BitConverter.GetBytes(bytes.Length), 0, 4);
+                            writer.Write(bytes, 0, bytes.Length);
+                            indicies[i++] = index;
+                            index += bytes.Length;
+                        }
+                        UpdateEventSourceIndexFile(eventSourceId, indicies);
+                        writer.Flush();
                     }
-                    UpdateEventSourceIndexFile(source.EventSourceId, indicies);
-                    writer.Flush();
                 }
             }
             finally
             {
-                source.EventSourceId.ReleaseWriteLock();
+                foreach (var lockedEventSourceId in locks)
+                {
+                    lockedEventSourceId.ReleaseWriteLock();
+                }
             }
         }
 
@@ -112,7 +137,7 @@ namespace Ncqrs.Eventing.Storage.NoDB
                 writer.Seek(0, SeekOrigin.End);
                 writer.Write(bytes, 0, 8);
             }
-            
+
         }
 
         private long GetEventSourceIndexForVersion(Guid id, long version)
@@ -120,7 +145,7 @@ namespace Ncqrs.Eventing.Storage.NoDB
             var file = id.GetVersionFile(_path);
             using (var reader = file.OpenRead())
             {
-                reader.Seek(version*8, SeekOrigin.Begin);
+                reader.Seek(version * 8, SeekOrigin.Begin);
                 var indexBytes = new byte[8];
                 reader.Read(indexBytes, 0, 8);
                 return BitConverter.ToInt64(indexBytes, 0);
@@ -130,7 +155,7 @@ namespace Ncqrs.Eventing.Storage.NoDB
         private long GetVersion(Guid id)
         {
             var file = id.GetVersionFile(_path);
-            return file.Length/8;
+            return file.Length / 8;
         }
 
         #endregion

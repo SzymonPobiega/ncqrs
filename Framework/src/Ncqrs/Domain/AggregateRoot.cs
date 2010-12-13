@@ -4,29 +4,36 @@ using Ncqrs.Eventing.Sourcing.Mapping;
 
 namespace Ncqrs.Domain
 {
+    public class Customer
+    {
+
+
+        public Customer()
+        {
+            PocoAggRoot.Register(this);   
+        }
+
+        protected void OnMyEvent(MyEvent e)
+        {
+            // handle event, update state.
+        }
+    }
+
+    public class PocoAggRoot : AggregateRoot
+    {
+        
+    }
+
     /// <summary>
     /// The abstract concept of an aggregate root.
     /// </summary>
     public abstract class AggregateRoot : EventSource
     {
-        /// <summary>
-        /// Occurs when an event was applied to an <see cref="AggregateRoot"/>.
-        /// </summary>
-        internal static event EventHandler<EventAppliedArgs> EventApplied;
-
         protected AggregateRoot()
-        {}
+        { }
 
-        protected AggregateRoot(Guid id) : base(id)
-        {}
-
-        [NoEventHandler]
-        protected override void OnEventApplied(ISourcedEvent appliedEvent)
-        {
-            if(EventApplied != null)
-            {
-                EventApplied(this, new EventAppliedArgs(appliedEvent));
-            }
-        }
+        protected AggregateRoot(Guid id)
+            : base(id)
+        { }
     }
 }

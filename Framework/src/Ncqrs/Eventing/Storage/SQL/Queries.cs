@@ -8,11 +8,9 @@ namespace Ncqrs.Eventing.Storage.SQL
 
         public const String InsertNewEventQuery = "INSERT INTO [Events]([Id], [EventSourceId], [Name], [Version], [Data], [Sequence], [TimeStamp]) VALUES (@EventId, @EventSourceId, @Name, @Version, @Data, @Sequence, @TimeStamp)";
 
-        public const String InsertNewProviderQuery = "INSERT INTO [EventSources](Id, Type, Version) VALUES (@Id, @Type, @Version)";
+        public const String InsertNewProviderQuery = "INSERT INTO [EventSources](Id, Version) VALUES (@Id, @Version)";
 
         public const String SelectAllEventsQuery = "SELECT [Id], [EventSourceId], [Name], [Version], [TimeStamp], [Data], [Sequence] FROM [Events] WHERE [EventSourceId] = @EventSourceId AND [Sequence] > @EventSourceVersion ORDER BY [Sequence]";
-
-        public const String SelectAllIdsForTypeQuery = "SELECT [Id] FROM [EventSources] WHERE [Type] = @Type";
 
         public const String SelectVersionQuery = "SELECT [Version] FROM [EventSources] WHERE [Id] = @id";
 
