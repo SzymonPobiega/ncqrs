@@ -1,5 +1,4 @@
 ﻿using System;
-using Castle.Core.Interceptor;
 using Castle.DynamicProxy;
 using Ncqrs.Domain;
 
@@ -7,37 +6,26 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
 {
     public class PocoAggregateRoot : AggregateRoot
     {
+        [NonSerialized]
         private static readonly ProxyGenerator _proxyGenerator = new ProxyGenerator();        
+        [NonSerialized] 
+        private static readonly IEventHandlerMappingStrategy _mappingStrategy = new ConventionBasedEventHandlerMappingStrategy();
 
-        public PocoAggregateRoot(Type pocoType) : base()
+        public PocoAggregateRoot(Type pocoType)
+            : base()
         {
-            
-        }
+            var eventInterceptor = new ApplyEventInterceptor(this);
+            var idInterceptor = new IdInterceptor(this);
+            var poco = _proxyGenerator.CreateClassProxy(pocoType, eventInterceptor, idInterceptor);
 
-        private object CreatePublicInterface(Type pocoType)
-        {
-            return _proxyGenerator.CreateClassProxy(pocoType);
-        }
+            foreach (var handler in _mappingStrategy.GetEventHandlers(poco))
+            {
+                RegisterHandler(handler);
+                eventInterceptor.RegisterHandler(handler.GetHandlingMethod());
+            }
 
-        public PocoAggregateRoot(Type pocoType, Guid id) : base()
-        {
-            
+            PublicInterface = poco;
         }
-    }
-
-    public class ApplyEventInterceptor : IInterceptor
-    {
-        public void Intercept(IInvocation invocation)
-        {
-            //if (invocation.)
-        }
-    }
-
-    public class IdInterceptor : IInterceptor
-    {
-        public void Intercept(IInvocation invocation)
-        {
-            throw new NotImplementedException();
-        }
+                
     }
 }
