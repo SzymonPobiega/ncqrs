@@ -4,6 +4,11 @@ using Ncqrs.Domain;
 
 namespace Ncqrs.Eventing.Sourcing.Mapping
 {
+    public abstract class PocoAggregateRoot
+    {
+        
+    }
+
     public abstract class MappedAggregateRoot : AggregateRoot
     {
         [NonSerialized] 

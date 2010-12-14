@@ -28,7 +28,7 @@ namespace Ncqrs.Commanding.CommandExecution.Mapping.Fluent
             var factory = NcqrsEnvironment.Get<IUnitOfWorkFactory>();
             using (var work = factory.CreateUnitOfWork())
             {
-                _aggregaterootfetchfunc = (guid) => work.GetById<TAggRoot>(guid);
+                _aggregaterootfetchfunc = (guid) => (TAggRoot) work.GetById(typeof(TAggRoot), guid).PublicInterface;
                 work.Accept();
             }
         }

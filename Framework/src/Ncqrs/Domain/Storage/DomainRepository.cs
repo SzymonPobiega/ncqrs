@@ -35,22 +35,7 @@ namespace Ncqrs.Domain.Storage
                 for (var i = aggregateRoot.InitialVersion + 1; i <= aggregateRoot.Version; i++)
                     if (i % SnapshotIntervalInEvents == 0) return true;
             return false;
-        }
-
-        /// <summary>
-        /// Gets aggregate root by eventSourceId.
-        /// </summary>
-        /// <typeparam name="T">The type of the aggregate root.</typeparam>
-        /// <param name="eventSourceId">The eventSourceId of the aggregate root.</param>
-        /// <exception cref="AggregateRootNotFoundException">Occurs when the aggregate root with the 
-        /// specified event source id could not be found.</exception>
-        /// <returns>
-        /// A new instance of the aggregate root that contains the latest known state.
-        /// </returns>
-        public T GetById<T>(Guid eventSourceId) where T : AggregateRoot
-        {
-            return (T)GetById(typeof(T), eventSourceId);
-        }
+        }        
 
         /// <summary>
         /// Gets aggregate root by <see cref="AggregateRoot.EventSourcId">event source id</see>.

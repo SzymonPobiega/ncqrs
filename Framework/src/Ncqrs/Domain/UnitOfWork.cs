@@ -140,22 +140,7 @@ namespace Ncqrs.Domain
 
                 IsDisposed = true;
             }
-        }
-
-        /// <summary>
-        /// Gets aggregate root by eventSourceId.
-        /// </summary>
-        /// <typeparam name="TAggregateRoot">The type of the aggregate root.</typeparam>
-        /// <param name="eventSourceId">The eventSourceId of the aggregate root.</param>
-        /// <returns>
-        /// A new instance of the aggregate root that contains the latest known state.
-        /// </returns>
-        /// <exception cref="AggregateRootNotFoundException">Occurs when the aggregate root with the
-        /// specified event source id could not be found.</exception>
-        public TAggregateRoot GetById<TAggregateRoot>(Guid eventSourceId) where TAggregateRoot : AggregateRoot
-        {
-            return _repository.GetById<TAggregateRoot>(eventSourceId);
-        }
+        }        
 
         /// <summary>
         /// Gets aggregate root by <see cref="AggregateRoot.EventSourcId">event source id</see>.

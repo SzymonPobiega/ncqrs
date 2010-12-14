@@ -59,12 +59,14 @@ namespace Ncqrs.Tests.Commanding.CommandExecution
         [Test]
         public void Executing_it_should_create_unit_of_work_with_factory()
         {
+            var id = Guid.NewGuid();
             var factoryMock = MockRepository.GenerateMock<IUnitOfWorkFactory>();
             var contextMock = MockRepository.GenerateMock<IUnitOfWorkContext>();
+            contextMock.Expect(t => t.GetById(typeof(Message), id)).Return(new Message("A"));
 
             factoryMock.Expect(t => t.CreateUnitOfWork()).Repeat.Once().Return(contextMock);
 
-            Func<ChangeMessageTextCommand, Guid> getId = (c) => new Guid();
+            Func<ChangeMessageTextCommand, Guid> getId = (c) => id;
             Action<Message, ChangeMessageTextCommand> anAction = (m, c) => c.GetType();
             var executor = new DirectActionCommandExecutor<ChangeMessageTextCommand, Message>(getId, anAction, factoryMock);
 
@@ -77,13 +79,16 @@ namespace Ncqrs.Tests.Commanding.CommandExecution
         [Test]
         public void Executing_it_should_commit_unit_of_work()
         {
+            var id = new Guid();
+
             var factoryMock = MockRepository.GenerateMock<IUnitOfWorkFactory>();
             var contextMock = MockRepository.GenerateMock<IUnitOfWorkContext>();
 
             factoryMock.Stub(t => t.CreateUnitOfWork()).Return(contextMock);
             contextMock.Expect(t => t.Accept()).Repeat.Once();
+            contextMock.Expect(t => t.GetById(typeof (Message), id)).Return(new Message("A"));
 
-            Func<ChangeMessageTextCommand, Guid> getId = (c) => new Guid();
+            Func<ChangeMessageTextCommand, Guid> getId = (c) => id;
             Action<Message, ChangeMessageTextCommand> anAction = (m, c) => c.GetType();
             var executor = new DirectActionCommandExecutor<ChangeMessageTextCommand, Message>(getId, anAction, factoryMock);
 
@@ -96,6 +101,7 @@ namespace Ncqrs.Tests.Commanding.CommandExecution
         [Test]
         public void Executing_it_should_invoke_action()
         {
+            var id = Guid.NewGuid();
             var invoked = false;
 
             var factoryMock = MockRepository.GenerateMock<IUnitOfWorkFactory>();
@@ -103,13 +109,14 @@ namespace Ncqrs.Tests.Commanding.CommandExecution
 
             factoryMock.Stub(t => t.CreateUnitOfWork()).Return(contextMock);
             contextMock.Expect(t => t.Accept()).Repeat.Once();
+            contextMock.Expect(t => t.GetById(typeof(Message), id)).Return(new Message("A"));
 
             Action<Message, ChangeMessageTextCommand> anAction = (m, c) =>
             {
                 invoked = true;
             };
 
-            Func<ChangeMessageTextCommand, Guid> getId = (c) => new Guid();
+            Func<ChangeMessageTextCommand, Guid> getId = (c) => id;
             var executor = new DirectActionCommandExecutor<ChangeMessageTextCommand, Message>(getId, anAction, factoryMock);
 
             var cmd = new ChangeMessageTextCommand();
@@ -121,6 +128,7 @@ namespace Ncqrs.Tests.Commanding.CommandExecution
         [Test]
         public void Executing_it_should_invoke_getId()
         {
+            var id = Guid.NewGuid();
             var invoked = false;
 
             var factoryMock = MockRepository.GenerateMock<IUnitOfWorkFactory>();
@@ -128,12 +136,13 @@ namespace Ncqrs.Tests.Commanding.CommandExecution
 
             factoryMock.Stub(t => t.CreateUnitOfWork()).Return(contextMock);
             contextMock.Expect(t => t.Accept()).Repeat.Once();
+            contextMock.Expect(t => t.GetById(typeof(Message), id)).Return(new Message("A"));
 
             Action<Message, ChangeMessageTextCommand> anAction = (m, c) => c.GetType();
             Func<ChangeMessageTextCommand, Guid> getId = (c) =>
             {
                 invoked = true;
-                return Guid.NewGuid();
+                return id;
             };
             var executor = new DirectActionCommandExecutor<ChangeMessageTextCommand, Message>(getId, anAction, factoryMock);
 
@@ -149,10 +158,10 @@ namespace Ncqrs.Tests.Commanding.CommandExecution
             var id = Guid.NewGuid();
 
             var factoryMock = MockRepository.GenerateMock<IUnitOfWorkFactory>();
-            var contextMock = MockRepository.GenerateMock<IUnitOfWorkContext>();
+            var contextMock = MockRepository.GenerateMock<IUnitOfWorkContext>();            
 
             factoryMock.Stub(t => t.CreateUnitOfWork()).Return(contextMock);
-            contextMock.Expect(t => t.GetById<Message>(id)).Return(new Message("Hello world"));
+            contextMock.Expect(t => t.GetById(typeof(Message),id)).Return(new Message("Hello world"));
 
             Func<ChangeMessageTextCommand, Guid> getId = (c) => id;
             Action<Message, ChangeMessageTextCommand> anAction = (m, c) => c.GetType();

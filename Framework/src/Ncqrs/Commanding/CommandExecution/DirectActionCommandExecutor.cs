@@ -34,7 +34,7 @@ namespace Ncqrs.Commanding.CommandExecution
             using (var work = _uowFactory.CreateUnitOfWork())
             {
                 var id = _getId(command);
-                var aggRoot = work.GetById<TAggregateRoot>(id);
+                var aggRoot = (TAggregateRoot)work.GetById(typeof(TAggregateRoot),id).PublicInterface;
 
                 _action(aggRoot, command);
                 work.Accept();
