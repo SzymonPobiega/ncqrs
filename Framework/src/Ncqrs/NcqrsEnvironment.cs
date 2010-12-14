@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Reflection;
 using Ncqrs.Config;
 using Ncqrs.Domain;
+using Ncqrs.Domain.Storage;
 using Ncqrs.Eventing.ServiceModel.Bus;
 using Ncqrs.Eventing.Storage;
 
@@ -32,7 +33,8 @@ namespace Ncqrs
             SetDefault<IUniqueIdentifierGenerator>(new BasicGuidGenerator());
             SetDefault<IEventBus>(new InProcessEventBus());
             SetDefault<IEventStore>(new InMemoryEventStore());
-            SetDefault<IUnitOfWorkFactory>(new UnitOfWorkFactory());            
+            SetDefault<IUnitOfWorkFactory>(new UnitOfWorkFactory());
+            SetDefault<AggregateRootFactory>(new AggregateRootFactory(new SimpleAggregateRootCreationStrategy()));
         }
 
         /// <summary>
@@ -75,11 +77,11 @@ namespace Ncqrs
                 if (_defaults.TryGetValue(typeof(T), out defaultResult))
                 {
                     result = (T)defaultResult;
-                    
+
                 }
             }
 
-            if(result == null)
+            if (result == null)
                 throw new InstanceNotFoundInEnvironmentConfigurationException(typeof(T));
 
             return result;
@@ -99,7 +101,7 @@ namespace Ncqrs
         {
             Contract.Requires<ArgumentNullException>(instance != null, "The instance cannot be null.");
 
-            _defaults[typeof (T)] = instance;
+            _defaults[typeof(T)] = instance;
         }
 
         /// <summary>

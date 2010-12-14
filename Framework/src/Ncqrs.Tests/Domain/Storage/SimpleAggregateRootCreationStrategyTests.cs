@@ -20,25 +20,25 @@ namespace Ncqrs.Tests.Domain.Storage
         }
 
         [Test]
-        public void Creating_without_default_ctor_should_throw()
+        public void Creating_without_default_ctor_should_return_null()
         {
             var wrongType = typeof (AggRootWithoutDefaultCtor);
             var creator = new SimpleAggregateRootCreationStrategy();
             
-            Action act = () => creator.CreateAggregateRoot(wrongType);
+            var result = creator.CreateAggregateRoot(wrongType);
 
-            act.ShouldThrow<AggregateRootCreationException>().And.Message.Should().Contain(wrongType.FullName);
+            result.Should().BeNull();
         }
 
         [Test]
-        public void Creating_non_aggregate_root_type_should_throw()
+        public void Creating_non_aggregate_root_type_should_return_null()
         {
             var wrongType = typeof(Stream);
             var creator = new SimpleAggregateRootCreationStrategy();
 
-            Action act = () => creator.CreateAggregateRoot(wrongType);
+            var result = creator.CreateAggregateRoot(wrongType);
 
-            act.ShouldThrow<ArgumentException>().And.ParamName.Should().Be("aggregateRootType");
+            result.Should().BeNull();
         }
 
         [Test]

@@ -15,9 +15,9 @@ namespace Ncqrs.Domain.Storage
         private readonly IEventBus _eventBus;
         private readonly IEventStore _store;
         private readonly ISnapshotStore _snapshotStore;
-        private readonly IAggregateRootCreationStrategy _aggregateRootCreator;
+        private readonly AggregateRootFactory _aggregateRootFactory;
 
-        public DomainRepository(IEventStore store, IEventBus eventBus, ISnapshotStore snapshotStore = null, IAggregateRootCreationStrategy aggregateRootCreationStrategy = null)
+        public DomainRepository(IEventStore store, IEventBus eventBus, AggregateRootFactory aggregateRootFactory, ISnapshotStore snapshotStore = null)
         {
             Contract.Requires<ArgumentNullException>(store != null);
             Contract.Requires<ArgumentNullException>(eventBus != null);
@@ -25,7 +25,7 @@ namespace Ncqrs.Domain.Storage
             _store = store;
             _eventBus = eventBus;
             _snapshotStore = snapshotStore;
-            _aggregateRootCreator = aggregateRootCreationStrategy ?? new SimpleAggregateRootCreationStrategy();
+            _aggregateRootFactory = aggregateRootFactory;
         }
 
         //Creates a snapshot if the 
@@ -117,7 +117,7 @@ namespace Ncqrs.Domain.Storage
 
         protected AggregateRoot CreateEmptyAggRoot(Type aggregateRootType)
         {
-            return _aggregateRootCreator.CreateAggregateRoot(aggregateRootType);
+            return _aggregateRootFactory.CreateAggregateRoot(aggregateRootType);
         }
 
         private bool AggregateRootSupportsSnapshot(Type aggType, ISnapshot snapshot)
