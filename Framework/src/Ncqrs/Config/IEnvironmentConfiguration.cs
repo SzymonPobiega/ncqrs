@@ -20,14 +20,7 @@ namespace Ncqrs.Config
 
     [ContractClassFor(typeof(IEnvironmentConfiguration))]
     internal abstract class IEnvironmentConfigurationContracts : IEnvironmentConfiguration
-    {
-        public T Get<T>() where T : class
-        {
-            Contract.Ensures(Contract.Result<T>() != null);
-
-            return default(T);
-        }
-
+    {        
         public bool TryGet<T>(out T result) where T : class
         {
             Contract.Ensures(Contract.Result<bool>() ? Contract.ValueAtReturn(out result) != null : Contract.ValueAtReturn(out result) == null);

@@ -11,7 +11,7 @@ namespace Ncqrs.Spec
     [TestFixture] // TODO: Testdriven.net debug runner doesn't recognize inhiret attributes. Use native for now.
     public abstract class AggregateRootTestFixture<TAggregateRoot> where TAggregateRoot : AggregateRoot
     {
-        protected IAggregateRootCreationStrategy CreationStrategy { get; set; }
+        protected AggregateRootFactory Factory { get; set; }
 
         protected TAggregateRoot AggregateRoot { get; set; }
 
@@ -32,9 +32,9 @@ namespace Ncqrs.Spec
         [SetUp] // TODO: Testdriven.net debug runner doesn't recognize inhiret attributes. Use native for now.
         public void Setup()
         {
-            CreationStrategy = new SimpleAggregateRootCreationStrategy();
+            Factory = new AggregateRootFactory(new SimpleAggregateRootCreationStrategy());
 
-            AggregateRoot = CreationStrategy.CreateAggregateRoot<TAggregateRoot>();
+            AggregateRoot = (TAggregateRoot) Factory.CreateAggregateRoot(typeof(TAggregateRoot));
             PublishedEvents = new SourcedEvent[0];
             
             var history = Given();

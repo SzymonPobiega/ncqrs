@@ -32,7 +32,7 @@ namespace Ncqrs
             SetDefault<IUniqueIdentifierGenerator>(new BasicGuidGenerator());
             SetDefault<IEventBus>(new InProcessEventBus());
             SetDefault<IEventStore>(new InMemoryEventStore());
-            SetDefault<IUnitOfWorkFactory>(new UnitOfWorkFactory());
+            SetDefault<IUnitOfWorkFactory>(new UnitOfWorkFactory());            
         }
 
         /// <summary>

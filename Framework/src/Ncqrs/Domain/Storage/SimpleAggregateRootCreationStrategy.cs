@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace Ncqrs.Domain.Storage
@@ -10,7 +11,8 @@ namespace Ncqrs.Domain.Storage
             if (!aggregateRootType.IsSubclassOf(typeof(AggregateRoot)))
             {
                 var msg = string.Format("Specified type {0} is not a subclass of AggregateRoot class.", aggregateRootType.FullName);
-                throw new ArgumentOutOfRangeException("aggregateRootType", msg);
+                Debug.WriteLine(msg, "SimpleAggregateRootCreationStrategy");
+                return null;
             }
 
             // Flags to search for a public and non public contructor.
@@ -24,18 +26,14 @@ namespace Ncqrs.Domain.Storage
             {
                 var message = String.Format("No constructor found on aggregate root type {0} that accepts " +
                                             "no parameters.", aggregateRootType.AssemblyQualifiedName);
-                throw new AggregateRootCreationException(message);
+                Debug.WriteLine(message, "SimpleAggregateRootCreationStrategy");
+                return null;
             }
 
             // There was a ctor found, so invoke it and return the instance.
             var aggregateRoot = (AggregateRoot)ctor.Invoke(null);
 
             return aggregateRoot;
-        }
-
-        public T CreateAggregateRoot<T>() where T : AggregateRoot
-        {
-            return (T) CreateAggregateRoot(typeof (T));
-        }
+        }        
     }
 }
