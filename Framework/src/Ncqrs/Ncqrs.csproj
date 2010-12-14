@@ -79,6 +79,12 @@
     <CodeContractsReferenceAssembly>%28none%29</CodeContractsReferenceAssembly>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Castle.Core">
+      <HintPath>..\..\..\lib\ThirdParty\CastleWindsor\Castle.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Castle.DynamicProxy2">
+      <HintPath>..\..\..\lib\ThirdParty\CastleWindsor\Castle.DynamicProxy2.dll</HintPath>
+    </Reference>
     <Reference Include="log4net">
       <HintPath>..\..\..\lib\ThirdParty\log4net\log4net.dll</HintPath>
       <Private>False</Private>
@@ -103,6 +109,7 @@
     <Compile Include="Domain\Storage\AggregateRootFactory.cs" />
     <Compile Include="Domain\Storage\IAggregateRootCreationStrategy.cs" />
     <Compile Include="Domain\Storage\SimpleAggregateRootCreationStrategy.cs" />
+    <Compile Include="Eventing\Sourcing\Mapping\PocoAggregateRoot.cs" />
     <Compile Include="Eventing\Sourcing\SourcedEventArgs.cs" />
     <Compile Include="Eventing\Sourcing\SourcedEntityEvent.cs" />
     <Compile Include="Eventing\Sourcing\SourcedEventHandlerPredicate.cs" />

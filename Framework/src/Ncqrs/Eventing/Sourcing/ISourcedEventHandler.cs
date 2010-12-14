@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Reflection;
 
 namespace Ncqrs.Eventing.Sourcing
 {
@@ -17,6 +18,11 @@ namespace Ncqrs.Eventing.Sourcing
         /// <remarks><c>false</c> does not mean that the handling failed, but that the 
         /// handler was not interested in handling this event.</remarks></returns>
         Boolean HandleEvent(ISourcedEvent sourcedEvent);
+        /// <summary>
+        /// Gets metadata about method handling this event.
+        /// </summary>
+        /// <returns></returns>
+        MethodBase GetHandlingMethod();
     }
 
     [ContractClassFor(typeof(ISourcedEventHandler))]
@@ -27,6 +33,11 @@ namespace Ncqrs.Eventing.Sourcing
             Contract.Requires<ArgumentNullException>(sourcedEvent != null, "The sourcedEvent cannot be null.");
 
             return default(bool);
+        }
+
+        public MethodBase GetHandlingMethod()
+        {
+            return null;
         }
     }
 }

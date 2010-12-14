@@ -78,7 +78,7 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
 
             Action<IEvent> handler = e => method.Invoke(eventSource, new object[] { e });
 
-            return new TypeThresholdedActionBasedDomainEventHandler(handler, firstParameterType, attribute.Exact);
+            return new TypeThresholdedActionBasedDomainEventHandler(handler, firstParameterType, attribute.Exact, method);
         }
 
         private static Boolean IsMarkedAsEventHandler(MethodInfo target, out EventHandlerAttribute attribute)

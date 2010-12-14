@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 
 namespace Ncqrs.Eventing.Sourcing
 {
@@ -16,6 +17,11 @@ namespace Ncqrs.Eventing.Sourcing
             }
 
             return handled;
+        }
+
+        public MethodBase GetHandlingMethod()
+        {
+            return null;
         }
     }
 }

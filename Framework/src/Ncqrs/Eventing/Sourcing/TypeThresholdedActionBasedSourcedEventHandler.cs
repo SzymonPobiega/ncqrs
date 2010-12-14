@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Reflection;
 
 namespace Ncqrs.Eventing.Sourcing
 {
@@ -31,14 +32,19 @@ namespace Ncqrs.Eventing.Sourcing
         private readonly Action<ISourcedEvent> _handler;
 
         /// <summary>
+        /// The metadata about event handling method.
+        /// </summary>
+        private readonly MethodBase _handlerMetadata;
+
+        /// <summary>
         ///   Initializes a new instance of the <see cref = "TypeThresholdedActionBasedDomainEventHandler" /> class.
         /// </summary>
         /// <param name = "handler">The handler that will be called to handle a event when the threshold did not hold the event.</param>
         /// <param name = "eventTypeThreshold">The event type that should be used as threshold.</param>
         /// <param name = "exact">if set to <c>true</c> the threshold will hold all types that are not the same type; otherwise it hold 
-        /// all types that are not inhered from the event type threshold or implement the interface that is specified by the threshold type.</param>
-        public TypeThresholdedActionBasedDomainEventHandler(Action<ISourcedEvent> handler, Type eventTypeThreshold,
-                                                              Boolean exact = false)
+        ///   all types that are not inhered from the event type threshold or implement the interface that is specified by the threshold type.</param>
+        /// <param name="handlerMetadata">The matadata about event handling method.</param>
+        public TypeThresholdedActionBasedDomainEventHandler(Action<ISourcedEvent> handler, Type eventTypeThreshold, bool exact = false, MethodBase handlerMetadata = null)
         {
             Contract.Requires<ArgumentNullException>(handler != null, "The handler cannot be null.");
             Contract.Requires<ArgumentNullException>(eventTypeThreshold != null,
@@ -49,6 +55,7 @@ namespace Ncqrs.Eventing.Sourcing
             _handler = handler;
             _eventTypeThreshold = eventTypeThreshold;
             _exact = exact;
+            _handlerMetadata = handlerMetadata;
         }
 
         /// <summary>
@@ -79,6 +86,11 @@ namespace Ncqrs.Eventing.Sourcing
             }
 
             return handled;
+        }
+
+        public MethodBase GetHandlingMethod()
+        {
+            return _handlerMetadata;
         }
 
         /// <summary>
@@ -128,8 +140,8 @@ namespace Ncqrs.Eventing.Sourcing
     public class TypeThresholdedActionBasedDomainEventHandler<TEvent> : TypeThresholdedActionBasedDomainEventHandler
         where TEvent : ISourcedEvent
     {
-        public TypeThresholdedActionBasedDomainEventHandler(Action<TEvent> handler, bool exact)
-            : base((e)=> handler((TEvent)e), typeof(TEvent), exact)
+        public TypeThresholdedActionBasedDomainEventHandler(Action<TEvent> handler, MethodBase handlerMetadata, bool exact)
+            : base((e)=> handler((TEvent)e), typeof(TEvent), exact, handlerMetadata)
         {
         }
     }

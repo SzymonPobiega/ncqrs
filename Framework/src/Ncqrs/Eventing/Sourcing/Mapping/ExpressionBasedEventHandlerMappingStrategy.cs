@@ -74,7 +74,7 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
             Type firstParameterType = method.GetParameters().First().ParameterType;
 
             Action<IEvent> handler = e => method.Invoke(eventSource, new object[] { e });
-            return new TypeThresholdedActionBasedDomainEventHandler(handler, firstParameterType, exact);
+            return new TypeThresholdedActionBasedDomainEventHandler(handler, firstParameterType, exact, method);
         }
     }
 }
