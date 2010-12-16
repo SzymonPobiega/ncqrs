@@ -19,16 +19,32 @@ namespace Ncqrs.Domain
 
         public void Intercept(IInvocation invocation)
         {
-            if (_isApplying || !_eventHandlers.Any(x => x.Name == invocation.Method.Name))
+            if (_isApplying || !IsEventHandler(invocation))
             {
                 invocation.Proceed();
             }
             else
             {
-                _isApplying = true;
+                RedirectToApply(invocation);
+            }
+        }
+
+        private void RedirectToApply(IInvocation invocation)
+        {
+            _isApplying = true;
+            try
+            {
                 _aggregateRoot.ApplyEvent((ISourcedEvent)invocation.Arguments[0]);
+            }
+            finally 
+            {
                 _isApplying = false;   
             }
+        }
+
+        private bool IsEventHandler(IInvocation invocation)
+        {
+            return _eventHandlers.Any(x => x.Name == invocation.Method.Name);
         }
 
         public void RegisterHandler(MethodBase handlingMethodMetadata)

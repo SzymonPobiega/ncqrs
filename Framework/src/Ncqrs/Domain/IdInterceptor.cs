@@ -1,4 +1,6 @@
-﻿using Castle.Core.Interceptor;
+﻿using System;
+using System.Reflection;
+using Castle.Core.Interceptor;
 
 namespace Ncqrs.Domain
 {
@@ -13,15 +15,28 @@ namespace Ncqrs.Domain
 
         public void Intercept(IInvocation invocation)
         {
-            if (invocation.Method.IsSpecialName && invocation.Method.Name == "get_Id")
+            if (IsIdPropertyGetter(invocation.Method))
             {
-                //Check type == Guid
+                VerifySignature(invocation.Method);
                 invocation.ReturnValue = _aggregateRoot.EventSourceId;
             }
             else
             {
                 invocation.Proceed();
             }
+        }
+
+        private static void VerifySignature(MethodInfo invocationTarget)
+        {
+            if (invocationTarget.ReturnType != typeof(Guid))
+            {
+                throw new InvalidOperationException("Id property must be of System.Guid type.");
+            }
+        }
+
+        private static bool IsIdPropertyGetter(MethodBase invocationTarget)
+        {
+            return invocationTarget.IsSpecialName && invocationTarget.Name == "get_Id";
         }
     }
 }

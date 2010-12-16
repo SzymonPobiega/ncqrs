@@ -3,6 +3,7 @@ using System.Linq;
 using Ncqrs.Domain;
 using Ncqrs.Eventing.Sourcing;
 using NUnit.Framework;
+using Rhino.Mocks;
 
 namespace Ncqrs.Tests.Domain
 {
@@ -40,6 +41,20 @@ namespace Ncqrs.Tests.Domain
             {
                 get { return _value; }
             }
+        }
+
+        [Test]
+        public void Id_property_returns_event_source_id()
+        {
+            var id = Guid.NewGuid();
+            var idGeneraor = MockRepository.GenerateMock<IUniqueIdentifierGenerator>();
+            idGeneraor.Expect(x => x.GenerateNewId()).Return(id);
+            NcqrsEnvironment.SetDefault(idGeneraor);
+            var root = new PocoAggregateRoot(typeof(TestPocoAggregateRoot));
+
+            var returnedId = ((TestPocoAggregateRoot) root.PublicInterface).Id;
+
+            Assert.AreEqual(id, returnedId);
         }
 
         [Test]
