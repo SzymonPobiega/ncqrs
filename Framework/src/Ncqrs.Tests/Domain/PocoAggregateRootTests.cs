@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Ncqrs.Domain;
 using Ncqrs.Eventing.Sourcing;
+using Ncqrs.Eventing.Sourcing.Mapping;
 using NUnit.Framework;
 using Rhino.Mocks;
 
@@ -50,7 +51,7 @@ namespace Ncqrs.Tests.Domain
             var idGeneraor = MockRepository.GenerateMock<IUniqueIdentifierGenerator>();
             idGeneraor.Expect(x => x.GenerateNewId()).Return(id);
             NcqrsEnvironment.SetDefault(idGeneraor);
-            var root = new PocoAggregateRoot(typeof(TestPocoAggregateRoot));
+            var root = new PocoAggregateRoot(typeof(TestPocoAggregateRoot), new ConventionBasedEventHandlerMappingStrategy());
 
             var returnedId = ((TestPocoAggregateRoot) root.PublicInterface).Id;
 
@@ -60,7 +61,7 @@ namespace Ncqrs.Tests.Domain
         [Test]
         public void Invoking_a_method_should_result_in_publishing_event()
         {
-            var root = new PocoAggregateRoot(typeof (TestPocoAggregateRoot));
+            var root = new PocoAggregateRoot(typeof(TestPocoAggregateRoot), new ConventionBasedEventHandlerMappingStrategy());
 
             ((TestPocoAggregateRoot) root.PublicInterface).DoSomething(5);
 

@@ -8,16 +8,14 @@ namespace Ncqrs.Domain
     {
         [NonSerialized]
         private static readonly ProxyGenerator _proxyGenerator = new ProxyGenerator();        
-        [NonSerialized] 
-        private static readonly IEventHandlerMappingStrategy _mappingStrategy = new ConventionBasedEventHandlerMappingStrategy();
 
-        public PocoAggregateRoot(Type pocoType)
+        public PocoAggregateRoot(Type pocoType, IEventHandlerMappingStrategy eventHandlerMappingStrategy)
         {
             var eventInterceptor = new ApplyEventInterceptor(this);
             var idInterceptor = new IdInterceptor(this);
             var poco = _proxyGenerator.CreateClassProxy(pocoType, eventInterceptor, idInterceptor);
 
-            foreach (var handler in _mappingStrategy.GetEventHandlers(poco))
+            foreach (var handler in eventHandlerMappingStrategy.GetEventHandlers(poco))
             {
                 RegisterHandler(handler);
                 eventInterceptor.RegisterHandler(handler.GetHandlingMethod());

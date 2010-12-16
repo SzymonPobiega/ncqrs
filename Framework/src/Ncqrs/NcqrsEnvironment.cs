@@ -34,7 +34,7 @@ namespace Ncqrs
             SetDefault<IEventBus>(new InProcessEventBus());
             SetDefault<IEventStore>(new InMemoryEventStore());
             SetDefault<IUnitOfWorkFactory>(new UnitOfWorkFactory());
-            SetDefault<AggregateRootFactory>(new AggregateRootFactory(new SimpleAggregateRootCreationStrategy()));
+            SetDefault<AggregateRootFactory>(new AggregateRootFactory());
         }
 
         /// <summary>

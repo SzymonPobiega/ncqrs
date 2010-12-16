@@ -32,7 +32,7 @@ namespace Ncqrs.Spec
         [SetUp] // TODO: Testdriven.net debug runner doesn't recognize inhiret attributes. Use native for now.
         public void Setup()
         {
-            Factory = new AggregateRootFactory(new SimpleAggregateRootCreationStrategy());
+            Factory = new AggregateRootFactory();
 
             AggregateRoot = (TAggregateRoot) Factory.CreateAggregateRoot(typeof(TAggregateRoot));
             PublishedEvents = new SourcedEvent[0];
