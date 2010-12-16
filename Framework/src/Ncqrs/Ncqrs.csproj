@@ -108,10 +108,11 @@
     <Compile Include="Domain\EntityMappedByConvention.cs" />
     <Compile Include="Domain\Storage\AggregateRootFactory.cs" />
     <Compile Include="Domain\Storage\IAggregateRootCreationStrategy.cs" />
+    <Compile Include="Domain\Storage\PocoAggregateRootCreationStrategy.cs" />
     <Compile Include="Domain\Storage\SimpleAggregateRootCreationStrategy.cs" />
-    <Compile Include="Eventing\Sourcing\Mapping\ApplyEventInterceptor.cs" />
-    <Compile Include="Eventing\Sourcing\Mapping\IdInterceptor.cs" />
-    <Compile Include="Eventing\Sourcing\Mapping\PocoAggregateRoot.cs" />
+    <Compile Include="Domain\ApplyEventInterceptor.cs" />
+    <Compile Include="Domain\IdInterceptor.cs" />
+    <Compile Include="Domain\PocoAggregateRoot.cs" />
     <Compile Include="Eventing\Sourcing\SourcedEventArgs.cs" />
     <Compile Include="Eventing\Sourcing\SourcedEntityEvent.cs" />
     <Compile Include="Eventing\Sourcing\SourcedEventHandlerPredicate.cs" />

@@ -1,8 +1,8 @@
 ﻿using System;
 using Castle.DynamicProxy;
-using Ncqrs.Domain;
+using Ncqrs.Eventing.Sourcing.Mapping;
 
-namespace Ncqrs.Eventing.Sourcing.Mapping
+namespace Ncqrs.Domain
 {
     public class PocoAggregateRoot : AggregateRoot
     {
@@ -12,7 +12,6 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
         private static readonly IEventHandlerMappingStrategy _mappingStrategy = new ConventionBasedEventHandlerMappingStrategy();
 
         public PocoAggregateRoot(Type pocoType)
-            : base()
         {
             var eventInterceptor = new ApplyEventInterceptor(this);
             var idInterceptor = new IdInterceptor(this);

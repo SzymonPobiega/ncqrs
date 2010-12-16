@@ -1,7 +1,6 @@
 ﻿using Castle.Core.Interceptor;
-using Ncqrs.Domain;
 
-namespace Ncqrs.Eventing.Sourcing.Mapping
+namespace Ncqrs.Domain
 {
     public class IdInterceptor : IInterceptor
     {

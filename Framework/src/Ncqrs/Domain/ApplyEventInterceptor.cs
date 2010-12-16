@@ -1,12 +1,14 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Castle.Core.Interceptor;
-using Ncqrs.Domain;
+using Ncqrs.Eventing.Sourcing;
 
-namespace Ncqrs.Eventing.Sourcing.Mapping
+namespace Ncqrs.Domain
 {
     public class ApplyEventInterceptor : IInterceptor
     {
+        private bool _isApplying;
         private readonly AggregateRoot _aggregateRoot;
         private readonly List<MethodBase> _eventHandlers = new List<MethodBase>();
 
@@ -17,13 +19,15 @@ namespace Ncqrs.Eventing.Sourcing.Mapping
 
         public void Intercept(IInvocation invocation)
         {
-            if (!_eventHandlers.Contains(invocation.Method))
+            if (_isApplying || !_eventHandlers.Any(x => x.Name == invocation.Method.Name))
             {
                 invocation.Proceed();
             }
             else
             {
+                _isApplying = true;
                 _aggregateRoot.ApplyEvent((ISourcedEvent)invocation.Arguments[0]);
+                _isApplying = false;   
             }
         }
 
