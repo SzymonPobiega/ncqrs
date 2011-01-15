@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using NServiceBus;
 
 namespace Ncqrs.JOEventStore.NServiceBus.Tests
 {

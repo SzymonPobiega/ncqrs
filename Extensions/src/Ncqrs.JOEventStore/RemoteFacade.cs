@@ -29,16 +29,17 @@ namespace Ncqrs.JOEventStore
             {
                 throw new ArgumentException("Command id cannot be an empty GUID.", "metadata");
             }
+            if (metadata.TargetId == Guid.Empty)
+            {
+                throw new ArgumentException("Target id cannot be an empty GUID.", "metadata");
+            }
             if (metadata.TargetType == null)
             {
                 throw new AggregateException("Target type cannot be null.");
             }
 
-            var target = _factory.CreateAggregateRoot(metadata.TargetType);
-            if (metadata.TargetId.HasValue)
-            {
-                _repository.Load(target, metadata.TargetId.Value, metadata.LastKnownRevision);
-            }
+            var target = _factory.CreateAggregateRoot(metadata.TargetType, metadata.TargetId);
+            _repository.Load(target, metadata.TargetId, metadata.LastKnownRevision);
             commandAction(target);
             _repository.Store(target, metadata.CommandId);
         }

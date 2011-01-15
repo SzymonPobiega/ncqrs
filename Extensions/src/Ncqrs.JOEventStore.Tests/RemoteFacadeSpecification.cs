@@ -24,20 +24,17 @@ namespace Ncqrs.JOEventStore.Tests
         [Test]
         public void Storing_aggregate_should_preserve_values()
         {
+            Guid aggregateId = Guid.NewGuid();
             Guid commandId = Guid.NewGuid();
             var commandMetadata = new CommandMetadata
                                       {
                                           CommandId = commandId,
-                                          TargetType = typeof(TestAggregate)
+                                          TargetType = typeof(TestAggregate),
+                                          TargetId = aggregateId
                                       };
-            Guid aggregateId = Guid.Empty;
-            _facade.Execute(commandMetadata, x =>
-                                                 {
-                                                     aggregateId = x.EventSourceId;
-                                                     ((TestAggregate) x).TestMethod("Simon");
-                                                 });
+            _facade.Execute(commandMetadata, x => ((TestAggregate) x).TestMethod("Simon"));
 
-            var restoredRoot = new TestAggregate();
+            var restoredRoot = new TestAggregate(aggregateId);
              _repository.Load(restoredRoot, aggregateId, null);
 
             Assert.AreEqual("Simon", restoredRoot.HelloText);
@@ -46,25 +43,23 @@ namespace Ncqrs.JOEventStore.Tests
         [Test]
         public void Processing_the_same_command_twice_should_trow()
         {
+            Guid aggregateId = Guid.NewGuid();
+
             var creatingCommandMetadata = new CommandMetadata
-            {
-                CommandId = Guid.NewGuid(),
-                TargetType = typeof(TestAggregate)
-            };
-            
-            Guid aggregateId = Guid.Empty;
-            _facade.Execute(creatingCommandMetadata, x =>
-            {
-                aggregateId = x.EventSourceId;
-                ((TestAggregate)x).TestMethod("Creating...");
-            });
+                                              {
+                                                  CommandId = Guid.NewGuid(),
+                                                  TargetType = typeof (TestAggregate),
+                                                  TargetId = aggregateId
+                                              };
+
+            _facade.Execute(creatingCommandMetadata, x => ((TestAggregate)x).TestMethod("Creating..."));
 
             var duplicateCommandMetadata = new CommandMetadata
-            {
-                CommandId = Guid.NewGuid(),
-                TargetType = typeof(TestAggregate),
-                TargetId = aggregateId
-            };
+                                               {
+                                                   CommandId = Guid.NewGuid(),
+                                                   TargetType = typeof (TestAggregate),
+                                                   TargetId = aggregateId
+                                               };
 
             _facade.Execute(duplicateCommandMetadata, x => ((TestAggregate)x).TestMethod("First attempt"));
 
@@ -75,33 +70,31 @@ namespace Ncqrs.JOEventStore.Tests
         [Test]
         public void Processing_command_against_older_version_of_aggregate_should_throw()
         {
-            var creatingCommandMetadata = new CommandMetadata
-            {
-                CommandId = Guid.NewGuid(),
-                TargetType = typeof(TestAggregate)
-            };
+            Guid aggregateId = Guid.NewGuid();
 
-            Guid aggregateId = Guid.Empty;
-            _facade.Execute(creatingCommandMetadata, x =>
-            {
-                aggregateId = x.EventSourceId;
-                ((TestAggregate)x).TestMethod("Creating...");
-            });
+            var creatingCommandMetadata = new CommandMetadata
+                                              {
+                                                  CommandId = Guid.NewGuid(),
+                                                  TargetType = typeof (TestAggregate),
+                                                  TargetId = aggregateId
+                                              };
+
+            _facade.Execute(creatingCommandMetadata, x => ((TestAggregate) x).TestMethod("Creating..."));
 
             var susequentCommandMetadata = new CommandMetadata
-            {
-                CommandId = Guid.NewGuid(),
-                TargetType = typeof(TestAggregate),
-                TargetId = aggregateId
-            };
+                                               {
+                                                   CommandId = Guid.NewGuid(),
+                                                   TargetType = typeof (TestAggregate),
+                                                   TargetId = aggregateId
+                                               };
 
             var yetAnotherCommandMetadata = new CommandMetadata
-            {
-                CommandId = Guid.NewGuid(),
-                TargetType = typeof(TestAggregate),
-                TargetId = aggregateId,
-                LastKnownRevision = 1
-            };
+                                                {
+                                                    CommandId = Guid.NewGuid(),
+                                                    TargetType = typeof (TestAggregate),
+                                                    TargetId = aggregateId,
+                                                    LastKnownRevision = 1
+                                                };
 
             _facade.Execute(susequentCommandMetadata, x => ((TestAggregate)x).TestMethod("First attempt"));
 
@@ -113,6 +106,10 @@ namespace Ncqrs.JOEventStore.Tests
         public class TestAggregate : AggregateRootMappedByConvention
         {
             private string _helloText;
+
+            public TestAggregate(Guid id) : base(id)
+            {                
+            }
 
             public string HelloText
             {

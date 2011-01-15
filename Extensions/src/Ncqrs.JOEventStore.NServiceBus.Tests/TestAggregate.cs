@@ -1,4 +1,5 @@
-﻿using Ncqrs.Domain;
+﻿using System;
+using Ncqrs.Domain;
 
 namespace Ncqrs.JOEventStore.NServiceBus.Tests
 {
@@ -9,6 +10,10 @@ namespace Ncqrs.JOEventStore.NServiceBus.Tests
         public string HelloText
         {
             get { return _helloText; }
+        }
+
+        public TestAggregate(Guid id) : base(id)
+        {            
         }
 
         public void SayHello(string helloText)

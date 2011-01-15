@@ -1,6 +1,7 @@
 ﻿using System;
 using EventStore;
 using EventStore.Dispatcher;
+using EventStore.Persistence;
 using Ncqrs.Commanding;
 using Ncqrs.Commanding.CommandExecution;
 using Ncqrs.Commanding.ServiceModel;
@@ -35,6 +36,12 @@ namespace Ncqrs.JOEventStore.NServiceBus
             {
                 Configurer.RegisterSingleton(typeof(IAggregateRootCreationStrategy), new SimpleAggregateRootCreationStrategy());
             }
+        }
+
+        public ConfigNcqrs UseInMemoryPersistenceEngine()
+        {
+            Configurer.ConfigureComponent<InMemoryPersistenceEngine>(ComponentCallModelEnum.Singleton);
+            return this;
         }
 
         public ConfigNcqrs UseDispatcher(IDispatchCommits commitDispatcher)
